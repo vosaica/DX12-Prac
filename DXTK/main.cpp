@@ -1,0 +1,18 @@
+#define WIN32
+
+#include "SimpleMath.h"
+#include <iostream>
+
+using namespace DirectX::SimpleMath;
+
+int main()
+{
+#ifndef NDEBUG
+    std::cout << "Debugging!\n";
+#endif // NDEBUG
+
+    Vector2 vA{12.0F, 10.0F};
+    std::cout << vA.x << " " << vA.y;
+
+    return 0;
+}
