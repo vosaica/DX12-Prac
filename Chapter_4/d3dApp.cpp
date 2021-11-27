@@ -196,11 +196,12 @@ void D3DApp::OnResize()
     depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
+    CD3DX12_HEAP_PROPERTIES defaultHeapProperty{D3D12_HEAP_TYPE_DEFAULT};
     D3D12_CLEAR_VALUE optClear{};
     optClear.Format = mDepthStencilFormat;
     optClear.DepthStencil.Depth = 1.0f;
     optClear.DepthStencil.Stencil = 0;
-    ThrowIfFailed(md3dDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+    ThrowIfFailed(md3dDevice->CreateCommittedResource(&defaultHeapProperty,
                                                       D3D12_HEAP_FLAG_NONE,
                                                       &depthStencilDesc,
                                                       D3D12_RESOURCE_STATE_COMMON,
@@ -215,11 +216,12 @@ void D3DApp::OnResize()
     dsvDesc.Texture2D.MipSlice = 0;
     md3dDevice->CreateDepthStencilView(mDepthStencilBuffer.Get(), &dsvDesc, DepthStencilView());
 
+    CD3DX12_RESOURCE_BARRIER barrierPreRtv
+        = CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilBuffer.Get(),
+                                               D3D12_RESOURCE_STATE_COMMON,
+                                               D3D12_RESOURCE_STATE_DEPTH_WRITE);
     // Transition the resource from its initial state to be used as a depth buffer.
-    mCommandList->ResourceBarrier(1,
-                                  &CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilBuffer.Get(),
-                                                                        D3D12_RESOURCE_STATE_COMMON,
-                                                                        D3D12_RESOURCE_STATE_DEPTH_WRITE));
+    mCommandList->ResourceBarrier(1, &barrierPreRtv);
 
     // Execute the resize commands.
     ThrowIfFailed(mCommandList->Close());
@@ -427,7 +429,7 @@ bool D3DApp::InitMainWindow()
 
 bool D3DApp::InitDirect3D()
 {
-#if defined(DEBUG) || defined(_DEBUG)
+#ifndef NDEBUG
     // Enable the D3D12 debug layer.
     {
         ComPtr<ID3D12Debug> debugController;
@@ -475,7 +477,7 @@ bool D3DApp::InitDirect3D()
     m4xMsaaQuality = msQualityLevels.NumQualityLevels;
     assert(m4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 
-#ifdef _DEBUG
+#ifndef NDEBUG
     LogAdapters();
 #endif
 
@@ -646,7 +648,7 @@ void D3DApp::LogAdapterOutputs(ComPtr<IDXGIAdapter> adapter)
         text += L"\n";
         OutputDebugString(text.c_str());
 
-        LogOutputDisplayModes(output.Get(), mBackBufferFormat);
+        LogOutputDisplayModes(output, mBackBufferFormat);
 
         ++i;
     }

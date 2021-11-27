@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _D3DAPP_
+#define _D3DAPP_
 
 #ifndef NDEBUG
 #define _CRTDBG_MAP_ALLOC
@@ -18,8 +19,6 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
-
-using Microsoft::WRL::ComPtr;
 
 class D3DApp
 {
@@ -76,8 +75,8 @@ protected:
     void CalculateFrameStats();
 
     void LogAdapters();
-    void LogAdapterOutputs(ComPtr<IDXGIAdapter> adapter);
-    void LogOutputDisplayModes(ComPtr<IDXGIOutput> output, DXGI_FORMAT format);
+    void LogAdapterOutputs(Microsoft::WRL::ComPtr<IDXGIAdapter> adapter);
+    void LogOutputDisplayModes(Microsoft::WRL::ComPtr<IDXGIOutput> output, DXGI_FORMAT format);
 
 protected:
     static D3DApp* mApp;
@@ -116,8 +115,8 @@ protected:
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap;
 
-    D3D12_VIEWPORT mScreenViewport;
-    D3D12_RECT mScissorRect;
+    D3D12_VIEWPORT mScreenViewport{};
+    D3D12_RECT mScissorRect{};
 
     UINT mRtvDescriptorSize = 0;
     UINT mDsvDescriptorSize = 0;
@@ -131,3 +130,5 @@ protected:
     int mClientWidth = 800;
     int mClientHeight = 600;
 };
+
+#endif // _D3DAPP_
