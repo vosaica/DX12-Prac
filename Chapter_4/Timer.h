@@ -6,15 +6,14 @@
 
 class Timer
 {
-    using TimePoint
-        = std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<long long, std::micro>>;
     using Duration = std::chrono::duration<long long, std::micro>;
+    using TimePoint = std::chrono::time_point<std::chrono::steady_clock, Duration>;
 
 public:
     Timer();
 
-    float TotalTime() const; // in seconds
-    float DeltaTime() const; // in seconds
+    double TotalTime() const; // in seconds
+    double DeltaTime() const; // in seconds
 
     void Reset(); // Call before message loop.
     void Start(); // Call when unpaused.

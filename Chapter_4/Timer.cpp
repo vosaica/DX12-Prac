@@ -12,7 +12,7 @@ Timer::Timer() : mDeltaTime(std::chrono::seconds(0)), mStopped(false)
 
 // Returns the total time elapsed since Reset() was called, NOT counting any
 // time when the clock is stopped.
-float Timer::TotalTime() const
+double Timer::TotalTime() const
 {
     // If we are stopped, do not count the time that has passed since we stopped.
     // Moreover, if we previously already had a pause, the distance
@@ -26,7 +26,7 @@ float Timer::TotalTime() const
     if (mStopped)
     {
         duration<double, std::ratio<1, 1>> dura1 = mStopTime - mBaseTime;
-        return (dura1 - duration_cast<duration<float, std::ratio<1, 1>>>(mPausedTime)).count();
+        return (dura1 - duration_cast<duration<double, std::ratio<1, 1>>>(mPausedTime)).count();
     }
 
     // The distance mCurrTime - mBaseTime includes paused time,
@@ -42,13 +42,13 @@ float Timer::TotalTime() const
     else
     {
         duration<double, std::ratio<1, 1>> dura1 = mCurrTime - mBaseTime;
-        return (dura1 - duration_cast<duration<float, std::ratio<1, 1>>>(mPausedTime)).count();
+        return (dura1 - duration_cast<duration<double, std::ratio<1, 1>>>(mPausedTime)).count();
     }
 }
 
-float Timer::DeltaTime() const
+double Timer::DeltaTime() const
 {
-    return duration_cast<duration<float>>(mDeltaTime).count();
+    return duration_cast<duration<double>>(mDeltaTime).count();
 }
 
 void Timer::Reset()
