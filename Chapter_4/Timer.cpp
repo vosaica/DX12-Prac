@@ -3,7 +3,6 @@
 #include <cassert>
 #include <chrono>
 #include <ratio>
-#include <windows.h>
 
 using namespace std::chrono;
 
@@ -27,7 +26,7 @@ float Timer::TotalTime() const
     if (mStopped)
     {
         duration<double, std::ratio<1, 1>> dura1 = mStopTime - mBaseTime;
-        return (dura1 - duration_cast<duration<double, std::ratio<1, 1>>>(mPausedTime)).count();
+        return (dura1 - duration_cast<duration<float, std::ratio<1, 1>>>(mPausedTime)).count();
     }
 
     // The distance mCurrTime - mBaseTime includes paused time,
@@ -43,7 +42,7 @@ float Timer::TotalTime() const
     else
     {
         duration<double, std::ratio<1, 1>> dura1 = mCurrTime - mBaseTime;
-        return (dura1 - duration_cast<duration<double, std::ratio<1, 1>>>(mPausedTime)).count();
+        return (dura1 - duration_cast<duration<float, std::ratio<1, 1>>>(mPausedTime)).count();
     }
 }
 
