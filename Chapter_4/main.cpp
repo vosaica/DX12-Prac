@@ -2,6 +2,7 @@
 
 int main()
 {
+    GameTimer gt{};
 
     return 0;
 }
