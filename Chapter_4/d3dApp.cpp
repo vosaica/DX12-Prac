@@ -10,10 +10,11 @@
 
 #include "d3dx12.h"
 
-#include <WindowsX.h>
 #include <cassert>
+#include <stdexcept>
 #include <string>
 #include <vector>
+#include <windowsx.h>
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -539,7 +540,7 @@ void D3DApp::CreateSwapChain()
 void D3DApp::FlushCommandQueue()
 {
     // Advance the fence value to mark commands up to this fence point.
-    mCurrentFence++;
+    ++mCurrentFence;
 
     // Add an instruction to the command queue to set a new fence point.  Because we
     // are on the GPU timeline, the new fence point won't be set until the GPU finishes
@@ -550,6 +551,11 @@ void D3DApp::FlushCommandQueue()
     if (mFence->GetCompletedValue() < mCurrentFence)
     {
         HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+        if (!eventHandle)
+        {
+            std::string message = "Failed to create event: " + std::to_string(GetLastError());
+            throw std::runtime_error(message);
+        }
 
         // Fire event when GPU hits current fence.
         ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFence, eventHandle));
@@ -673,6 +679,6 @@ void D3DApp::LogOutputDisplayModes(ComPtr<IDXGIOutput> output, DXGI_FORMAT forma
                           + std::to_wstring(x.Height) + L" " + L"Refresh = " + std::to_wstring(n) + L"/"
                           + std::to_wstring(d) + L"\n";
 
-        ::OutputDebugString(text.c_str());
+        OutputDebugString(text.c_str());
     }
 }
