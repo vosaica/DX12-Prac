@@ -3,7 +3,8 @@
 
 #include <DirectXColors.h>
 #include <codecvt>
-#include <locale>
+#include <cstdlib>
+#include <cstring>
 
 using namespace DirectX;
 
@@ -21,7 +22,16 @@ private:
     virtual void Draw(const Timer& t) override;
 };
 
-// std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+std::wstring cstring2wstring(const char* str)
+{
+    size_t newsize = strlen(str) + 1;
+    auto* wcstring = new wchar_t[newsize];
+    size_t convertedChars = 0;
+    mbstowcs_s(&convertedChars, wcstring, newsize, str, _TRUNCATE);
+    std::wstring res{wcstring};
+    delete[] wcstring;
+    return res;
+}
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
                    _In_opt_ HINSTANCE hPrevInstance,
@@ -44,7 +54,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
     }
     catch (com_exception& e)
     {
-        MessageBox(nullptr, L"HR Failed", L"HR Failed", MB_OK);
+        auto message = cstring2wstring(e.what());
+        MessageBox(nullptr, message.c_str(), L"HR Failed", MB_OK);
+
         return 0;
     }
 }
