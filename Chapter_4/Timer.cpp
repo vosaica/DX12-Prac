@@ -6,7 +6,7 @@
 
 using namespace std::chrono;
 
-Timer::Timer() : mDeltaTime(std::chrono::seconds(0)), mStopped(false)
+Timer::Timer() : mDeltaTime(std::chrono::seconds(0))
 {
 }
 
@@ -39,11 +39,8 @@ double Timer::TotalTime() const
     // ----*---------------*-----------------*------------*------> time
     //  mBaseTime       mStopTime        startTime     mCurrTime
 
-    else
-    {
-        duration<double, std::ratio<1, 1>> dura1 = mCurrTime - mBaseTime;
-        return (dura1 - duration_cast<duration<double, std::ratio<1, 1>>>(mPausedTime)).count();
-    }
+    duration<double, std::ratio<1, 1>> dura1 = mCurrTime - mBaseTime;
+    return (dura1 - duration_cast<duration<double, std::ratio<1, 1>>>(mPausedTime)).count();
 }
 
 double Timer::DeltaTime() const

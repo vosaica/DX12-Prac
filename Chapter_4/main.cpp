@@ -2,7 +2,6 @@
 #include "d3dx12.h"
 
 #include <DirectXColors.h>
-#include <codecvt>
 #include <cstdlib>
 #include <cstring>
 
@@ -12,14 +11,14 @@ class InitDirect3DApp : public D3DApp
 {
 public:
     InitDirect3DApp(HINSTANCE hInstance);
-    ~InitDirect3DApp();
+    ~InitDirect3DApp() override;
 
-    virtual bool Initialize() override;
+    bool Initialize() override;
 
 private:
-    virtual void OnResize() override;
-    virtual void Update(const Timer& t) override;
-    virtual void Draw(const Timer& t) override;
+    void OnResize() override;
+    void Update(const Timer& t) override;
+    void Draw(const Timer& t) override;
 };
 
 std::wstring cstring2wstring(const char* str)
@@ -36,7 +35,7 @@ std::wstring cstring2wstring(const char* str)
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
                    _In_opt_ HINSTANCE hPrevInstance,
                    _In_ PSTR pCmdLine,
-                   _In_ int nCmdShow)
+                   _In_ int nShowCmd)
 {
 #ifndef NDEBUG
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -65,17 +64,11 @@ InitDirect3DApp::InitDirect3DApp(HINSTANCE hInstance) : D3DApp(hInstance)
 {
 }
 
-InitDirect3DApp::~InitDirect3DApp()
-{
-}
+InitDirect3DApp::~InitDirect3DApp() = default;
 
 bool InitDirect3DApp::Initialize()
 {
-    if (!D3DApp::Initialize())
-    {
-        return false;
-    }
-    return true;
+    return D3DApp::Initialize();
 }
 
 void InitDirect3DApp::OnResize()
@@ -104,14 +97,14 @@ void InitDirect3DApp::Draw(const Timer& t)
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
     mCommandList->ClearDepthStencilView(DepthStencilView(),
                                         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-                                        1.0f,
+                                        1.0F,
                                         0,
                                         0,
                                         nullptr);
 
     auto currentBackBufferView = CurrentBackBufferView();
     auto depthStencilView = DepthStencilView();
-    mCommandList->OMSetRenderTargets(1, &currentBackBufferView, true, &depthStencilView);
+    mCommandList->OMSetRenderTargets(1, &currentBackBufferView, TRUE, &depthStencilView);
 
     barr = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
                                                 D3D12_RESOURCE_STATE_RENDER_TARGET,

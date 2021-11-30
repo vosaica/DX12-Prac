@@ -17,6 +17,7 @@
 #include "PlatformHelpers.h"
 #include "Timer.h"
 
+#include <array>
 #include <d3d12.h>
 #include <debugapi.h>
 #include <dxgi1_4.h>
@@ -32,18 +33,19 @@ class D3DApp
 {
 protected:
     D3DApp(HINSTANCE hInstance);
-    D3DApp(const D3DApp& rhs) = delete;
-    D3DApp& operator=(const D3DApp& rhs) = delete;
     virtual ~D3DApp();
 
 public:
+    D3DApp(const D3DApp& rhs) = delete;
+    D3DApp& operator=(const D3DApp& rhs) = delete;
+
     static D3DApp* GetApp();
 
-    HINSTANCE AppInst() const;
-    HWND MainWnd() const;
-    float AspectRatio() const;
+    [[nodiscard]] HINSTANCE AppInst() const;
+    [[nodiscard]] HWND MainWnd() const;
+    [[nodiscard]] float AspectRatio() const;
 
-    bool Get4xMsaaState() const;
+    [[nodiscard]] bool Get4xMsaaState() const;
     void Set4xMsaaState(bool value);
 
     int Run();
@@ -76,15 +78,15 @@ protected:
 
     void FlushCommandQueue();
 
-    ID3D12Resource* CurrentBackBuffer() const;
-    D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
-    D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
+    [[nodiscard]] ID3D12Resource* CurrentBackBuffer() const;
+    [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
+    [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
     void CalculateFrameStats();
 
     void LogAdapters();
-    void LogAdapterOutputs(Microsoft::WRL::ComPtr<IDXGIAdapter> adapter);
-    void LogOutputDisplayModes(Microsoft::WRL::ComPtr<IDXGIOutput> output, DXGI_FORMAT format);
+    void LogAdapterOutputs(const Microsoft::WRL::ComPtr<IDXGIAdapter>& adapter);
+    void LogOutputDisplayModes(const Microsoft::WRL::ComPtr<IDXGIOutput>& output, DXGI_FORMAT format);
 
 protected:
     static D3DApp* mApp;
@@ -117,7 +119,7 @@ protected:
 
     static const int SwapChainBufferCount = 2;
     int mCurrBackBuffer = 0;
-    Microsoft::WRL::ComPtr<ID3D12Resource> mSwapChainBuffer[SwapChainBufferCount];
+    std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, SwapChainBufferCount> mSwapChainBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
 
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;

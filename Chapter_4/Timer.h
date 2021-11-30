@@ -12,8 +12,8 @@ class Timer
 public:
     Timer();
 
-    double TotalTime() const; // in seconds
-    double DeltaTime() const; // in seconds
+    [[nodiscard]] double TotalTime() const; // in seconds
+    [[nodiscard]] double DeltaTime() const; // in seconds
 
     void Reset(); // Call before message loop.
     void Start(); // Call when unpaused.

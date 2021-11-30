@@ -17,9 +17,11 @@
 #include <wrl.h>
 
 #ifndef MAKEFOURCC
-#define MAKEFOURCC(ch0, ch1, ch2, ch3)                                                                          \
-    (static_cast<uint32_t>(static_cast<uint8_t>(ch0)) | (static_cast<uint32_t>(static_cast<uint8_t>(ch1)) << 8) \
-     | (static_cast<uint32_t>(static_cast<uint8_t>(ch2)) << 16) | (static_cast<uint32_t>(static_cast<uint8_t>(ch3)) << 24))
+#define MAKEFOURCC(ch0, ch1, ch2, ch3)                          \
+    (static_cast<uint32_t>(static_cast<uint8_t>(ch0))           \
+     | (static_cast<uint32_t>(static_cast<uint8_t>(ch1)) << 8)  \
+     | (static_cast<uint32_t>(static_cast<uint8_t>(ch2)) << 16) \
+     | (static_cast<uint32_t>(static_cast<uint8_t>(ch3)) << 24))
 #endif /* defined(MAKEFOURCC) */
 
 namespace DirectX
@@ -32,14 +34,14 @@ public:
     {
     }
 
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
         static char s_str[64] = {};
         sprintf_s(s_str, "Failure with HRESULT of %08X", static_cast<unsigned int>(result));
         return s_str;
     }
 
-    HRESULT get_result() const noexcept
+    [[nodiscard]] HRESULT get_result() const noexcept
     {
         return result;
     }
@@ -80,8 +82,10 @@ struct virtual_deleter
 {
     void operator()(void* p) noexcept
     {
-        if (p)
+        if (p != nullptr)
+        {
             VirtualFree(p, 0, MEM_RELEASE);
+        }
     }
 };
 #endif
@@ -90,8 +94,10 @@ struct handle_closer
 {
     void operator()(HANDLE h) noexcept
     {
-        if (h)
+        if (h != nullptr)
+        {
             CloseHandle(h);
+        }
     }
 };
 

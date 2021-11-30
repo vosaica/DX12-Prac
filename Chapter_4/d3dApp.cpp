@@ -42,7 +42,9 @@ D3DApp::D3DApp(HINSTANCE hInstance) : mhAppInst(hInstance)
 D3DApp::~D3DApp()
 {
     if (md3dDevice != nullptr)
+    {
         FlushCommandQueue();
+    }
 }
 
 HINSTANCE D3DApp::AppInst() const
@@ -57,7 +59,7 @@ HWND D3DApp::MainWnd() const
 
 float D3DApp::AspectRatio() const
 {
-    return static_cast<float>(mClientWidth) / mClientHeight;
+    return static_cast<float>(mClientWidth) / static_cast<float>(mClientHeight);
 }
 
 bool D3DApp::Get4xMsaaState() const
@@ -79,14 +81,14 @@ void D3DApp::Set4xMsaaState(bool value)
 
 int D3DApp::Run()
 {
-    MSG msg = {0};
+    MSG msg = {nullptr};
 
     mTimer.Reset();
 
     while (msg.message != WM_QUIT)
     {
         // If there are Window messages then process them.
-        if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -115,10 +117,14 @@ int D3DApp::Run()
 bool D3DApp::Initialize()
 {
     if (!InitMainWindow())
+    {
         return false;
+    }
 
     if (!InitDirect3D())
+    {
         return false;
+    }
 
     // Do the initial resize code.
     OnResize();
@@ -155,8 +161,10 @@ void D3DApp::OnResize()
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
     // Release the previous resources we will be recreating.
-    for (int i = 0; i < SwapChainBufferCount; ++i)
-        mSwapChainBuffer[i].Reset();
+    for (auto& i : mSwapChainBuffer)
+    {
+        i.Reset();
+    }
     mDepthStencilBuffer.Reset();
 
     // Resize the swap chain.
@@ -200,7 +208,7 @@ void D3DApp::OnResize()
     CD3DX12_HEAP_PROPERTIES defaultHeapProperty{D3D12_HEAP_TYPE_DEFAULT};
     D3D12_CLEAR_VALUE optClear{};
     optClear.Format = mDepthStencilFormat;
-    optClear.DepthStencil.Depth = 1.0f;
+    optClear.DepthStencil.Depth = 1.0F;
     optClear.DepthStencil.Stencil = 0;
     ThrowIfFailed(md3dDevice->CreateCommittedResource(&defaultHeapProperty,
                                                       D3D12_HEAP_FLAG_NONE,
@@ -237,8 +245,8 @@ void D3DApp::OnResize()
     mScreenViewport.TopLeftY = 0;
     mScreenViewport.Width = static_cast<float>(mClientWidth);
     mScreenViewport.Height = static_cast<float>(mClientHeight);
-    mScreenViewport.MinDepth = 0.0f;
-    mScreenViewport.MaxDepth = 1.0f;
+    mScreenViewport.MinDepth = 0.0F;
+    mScreenViewport.MaxDepth = 1.0F;
 
     mScissorRect = {0, 0, mClientWidth, mClientHeight};
 }
@@ -268,7 +276,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // Save the new client area dimensions.
         mClientWidth = LOWORD(lParam);
         mClientHeight = HIWORD(lParam);
-        if (md3dDevice)
+        if (md3dDevice != nullptr)
         {
             if (wParam == SIZE_MINIMIZED)
             {
@@ -371,8 +379,9 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
         }
         else if ((int)wParam == VK_F2)
+        {
             Set4xMsaaState(!m4xMsaaState);
-
+        }
         return 0;
     }
 
@@ -387,21 +396,21 @@ bool D3DApp::InitMainWindow()
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = mhAppInst;
-    wc.hIcon = LoadIcon(0, IDI_APPLICATION);
-    wc.hCursor = LoadCursor(0, IDC_ARROW);
+    wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
-    wc.lpszMenuName = 0;
+    wc.lpszMenuName = nullptr;
     wc.lpszClassName = L"MainWnd";
 
     if (!RegisterClass(&wc))
     {
-        MessageBox(0, L"RegisterClass Failed.", 0, 0);
+        MessageBox(nullptr, L"RegisterClass Failed.", nullptr, 0);
         return false;
     }
 
     // Compute window rectangle dimensions based on requested client area dimensions.
     RECT R = {0, 0, mClientWidth, mClientHeight};
-    AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
+    AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, FALSE);
     int width = R.right - R.left;
     int height = R.bottom - R.top;
 
@@ -412,13 +421,13 @@ bool D3DApp::InitMainWindow()
                              CW_USEDEFAULT,
                              width,
                              height,
-                             0,
-                             0,
+                             nullptr,
+                             nullptr,
                              mhAppInst,
-                             0);
-    if (!mhMainWnd)
+                             nullptr);
+    if (mhMainWnd == nullptr)
     {
-        MessageBox(0, L"CreateWindow Failed.", 0, 0);
+        MessageBox(nullptr, L"CreateWindow Failed.", nullptr, 0);
         return false;
     }
 
@@ -529,7 +538,7 @@ void D3DApp::CreateSwapChain()
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     sd.BufferCount = SwapChainBufferCount;
     sd.OutputWindow = mhMainWnd;
-    sd.Windowed = true;
+    sd.Windowed = TRUE;
     sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
@@ -550,8 +559,8 @@ void D3DApp::FlushCommandQueue()
     // Wait until the GPU has completed commands up to this fence point.
     if (mFence->GetCompletedValue() < mCurrentFence)
     {
-        HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-        if (!eventHandle)
+        HANDLE eventHandle = CreateEventEx(nullptr, nullptr, FALSE, EVENT_ALL_ACCESS);
+        if (eventHandle == nullptr)
         {
             std::string message = "Failed to create event: " + std::to_string(GetLastError());
             throw std::runtime_error(message);
@@ -590,15 +599,15 @@ void D3DApp::CalculateFrameStats()
     // are appended to the window caption bar.
 
     static int frameCnt = 0;
-    static float timeElapsed = 0.0f;
+    static float timeElapsed = 0.0F;
 
     frameCnt++;
 
     // Compute averages over one second period.
-    if ((mTimer.TotalTime() - timeElapsed) >= 1.0f)
+    if ((mTimer.TotalTime() - timeElapsed) >= 1.0F)
     {
-        float fps = (float)frameCnt; // fps = frameCnt / 1
-        float mspf = 1000.0f / fps;
+        auto fps = (float)frameCnt; // fps = frameCnt / 1
+        float mspf = 1000.0F / fps;
 
         std::wstring fpsStr = std::to_wstring(fps);
         std::wstring mspfStr = std::to_wstring(mspf);
@@ -609,7 +618,7 @@ void D3DApp::CalculateFrameStats()
 
         // Reset for next average.
         frameCnt = 0;
-        timeElapsed += 1.0f;
+        timeElapsed += 1.0F;
     }
 }
 
@@ -640,7 +649,7 @@ void D3DApp::LogAdapters()
     }
 }
 
-void D3DApp::LogAdapterOutputs(ComPtr<IDXGIAdapter> adapter)
+void D3DApp::LogAdapterOutputs(const ComPtr<IDXGIAdapter>& adapter)
 {
     UINT i = 0;
     ComPtr<IDXGIOutput> output;
@@ -660,7 +669,7 @@ void D3DApp::LogAdapterOutputs(ComPtr<IDXGIAdapter> adapter)
     }
 }
 
-void D3DApp::LogOutputDisplayModes(ComPtr<IDXGIOutput> output, DXGI_FORMAT format)
+void D3DApp::LogOutputDisplayModes(const ComPtr<IDXGIOutput>& output, DXGI_FORMAT format)
 {
     UINT count = 0;
     UINT flags = 0;
