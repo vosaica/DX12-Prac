@@ -15,7 +15,7 @@ std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMVECTOR v)
     return os;
 }
 
-// Ò»¸öXMMATRIXÊÇËÄ¸öXMVECTOR£¬ËùÒÔÔÚÒ»¸öº¯ÊýµÄFXMVECTOR²»³¬¹ýÁ½¸öÊ±£¬µÚÒ»¸öXMMATRIXÓ¦¸ÃÎªFXMMATRIX£¬ÆäÓàÎªCXMMATRIX
+// ä¸€ä¸ªXMMATRIXæ˜¯å››ä¸ªXMVECTORï¼Œæ‰€ä»¥åœ¨ä¸€ä¸ªå‡½æ•°çš„FXMVECTORä¸è¶…è¿‡ä¸¤ä¸ªæ—¶ï¼Œç¬¬ä¸€ä¸ªXMMATRIXåº”è¯¥ä¸ºFXMMATRIXï¼Œå…¶ä½™ä¸ºCXMMATRIX
 std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMMATRIX m)
 {
     for (int i = 0; i < 4; ++i)
@@ -48,19 +48,19 @@ int main()
 
     auto vPointB = XMVectorSet(2.0F, 3.0F, 1.0F, 1.0F);
     std::cout << "PointB:\n" << vPointB << std::endl;
-    // vW×ÜÊÇ1
+    // vWæ€»æ˜¯1
     std::cout << "Scaled PointB:\n" << XMVector3TransformCoord(vPointB, mScaling) << std::endl;
     std::cout << "Rotated PointB:\n" << XMVector3TransformCoord(vPointB, mRotateX) << std::endl;
 
     auto vVectorB = XMVectorSet(2.0F, 3.0F, 1.0F, 0.0F);
     std::cout << "VectorB:\n" << vVectorB << std::endl;
-    // vW×ÜÊÇ0
+    // vWæ€»æ˜¯0
     std::cout << "Scaled PointB:\n" << XMVector3TransformNormal(vVectorB, mScaling) << std::endl;
     std::cout << "Rotated PointB:\n" << XMVector3TransformNormal(vVectorB, mRotateX) << std::endl;
 
     auto vPointA = XMVectorSet(2.0F, 3.0F, 2.0F, 2000.0F);
     std::cout << "PointA:\n" << vPointA << std::endl;
-    // vW»á±»XMVector3TransformCoord¸ÄÎª1£¬ËùÒÔ²»±ØÏÔÊ½ÉèÖÃvW
+    // vWä¼šè¢«XMVector3TransformCoordæ”¹ä¸º1ï¼Œæ‰€ä»¥ä¸å¿…æ˜¾å¼è®¾ç½®vW
     std::cout << "Translated PointA:\n" << XMVector3TransformCoord(vPointA, mTranslate) << std::endl;
 
     return 0;
