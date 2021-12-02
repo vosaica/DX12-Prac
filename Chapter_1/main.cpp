@@ -6,8 +6,8 @@
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-// ÎªÁËÖ±½Ó°ÑXMVECTOR·Åµ½¼Ä´æÆ÷£¬·½·¨µ÷ÓÃÒª¼ÓXM_CALLCONV
-// Ç°Èý¸öFXMVECTOR, µÚËÄ¸öGXMVECTOR£¬µÚÎå¡¢Áù¸öHXMVECTOR£¬Ê£ÏÂµÄÓÃCXMVECTOR
+// ä¸ºäº†ç›´æŽ¥æŠŠXMVECTORæ”¾åˆ°å¯„å­˜å™¨ï¼Œæ–¹æ³•è°ƒç”¨è¦åŠ XM_CALLCONV
+// å‰ä¸‰ä¸ªFXMVECTOR, ç¬¬å››ä¸ªGXMVECTORï¼Œç¬¬äº”ã€å…­ä¸ªHXMVECTORï¼Œå‰©ä¸‹çš„ç”¨CXMVECTOR
 std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMVECTOR v)
 {
     XMFLOAT3 f3Dest;
@@ -32,7 +32,7 @@ int main()
     std::cout.precision(8);
 
     XMFLOAT2 f2A{12.0F, 10.0F};
-    const XMVECTORF32 vA{10.0F, 1.0F}; // ³£Á¿ÀàÐÍÓÃÕâ¸ö
+    const XMVECTORF32 vA{10.0F, 1.0F}; // å¸¸é‡ç±»åž‹ç”¨è¿™ä¸ª
     auto vB = XMLoadFloat2(&f2A);
     auto vC = vA * vB;
 

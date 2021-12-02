@@ -15,7 +15,7 @@ std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMVECTOR v)
     return os;
 }
 
-// Ò»¸öXMMATRIXÊÇËÄ¸öXMVECTOR£¬ËùÒÔÔÚÒ»¸öº¯ÊýµÄFXMVECTOR²»³¬¹ýÁ½¸öÊ±£¬µÚÒ»¸öXMMATRIXÓ¦¸ÃÎªFXMMATRIX£¬ÆäÓàÎªCXMMATRIX
+// ä¸€ä¸ªXMMATRIXæ˜¯å››ä¸ªXMVECTORï¼Œæ‰€ä»¥åœ¨ä¸€ä¸ªå‡½æ•°çš„FXMVECTORä¸è¶…è¿‡ä¸¤ä¸ªæ—¶ï¼Œç¬¬ä¸€ä¸ªXMMATRIXåº”è¯¥ä¸ºFXMMATRIXï¼Œå…¶ä½™ä¸ºCXMMATRIX
 std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMMATRIX m)
 {
     for (int i = 0; i < 4; ++i)
