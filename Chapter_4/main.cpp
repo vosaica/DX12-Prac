@@ -1,5 +1,5 @@
-#include "d3dApp.h"
-#include "d3dx12.h"
+#include "D3DApp.h"
+#include "directx/d3dx12.h"
 
 #include <DirectXColors.h>
 #include <cstdlib>
