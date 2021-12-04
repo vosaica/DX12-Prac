@@ -6,7 +6,7 @@
 #define _UNICODE
 #endif
 
-#include "d3dApp.h"
+#include "D3DApp.h"
 
 #include "directx/d3dx12.h"
 
