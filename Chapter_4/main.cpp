@@ -2,8 +2,6 @@
 #include "directx/d3dx12.h"
 
 #include <DirectXColors.h>
-#include <cstdlib>
-#include <cstring>
 
 using namespace DirectX;
 
@@ -20,17 +18,6 @@ private:
     void Update(const Timer& t) override;
     void Draw(const Timer& t) override;
 };
-
-std::wstring cstring2wstring(const char* str)
-{
-    size_t newsize = strlen(str) + 1;
-    auto* wcstring = new wchar_t[newsize];
-    size_t convertedChars = 0;
-    mbstowcs_s(&convertedChars, wcstring, newsize, str, _TRUNCATE);
-    std::wstring res{wcstring};
-    delete[] wcstring;
-    return res;
-}
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
                    _In_opt_ HINSTANCE hPrevInstance,
