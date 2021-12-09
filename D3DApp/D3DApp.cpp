@@ -8,7 +8,7 @@
 
 #include "D3DApp.h"
 
-#include "directx/d3dx12.h"
+#include "d3dx12.h"
 
 #include <cassert>
 #include <stdexcept>
