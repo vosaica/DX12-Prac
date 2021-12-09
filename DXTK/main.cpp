@@ -2,7 +2,8 @@
 #define WIN32
 #endif // !WIN32
 
-#include "SimpleMath.h"
+#include "DirectXTK12/SimpleMath.h"
+
 #include <iostream>
 
 using namespace DirectX::SimpleMath;
