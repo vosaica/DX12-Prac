@@ -1,5 +1,5 @@
-#include "D:\Programming\DX12\D3DApp\D3DApp.h"
-#include "D:\Programming\DX12\DirectXTK12\Inc\SimpleMath.h"
+#include "D3DApp.h"
+#include "DirectXTK12/SimpleMath.h"
 
 #include <DirectXColors.h>
 #include <DirectXMath.h>
@@ -75,7 +75,7 @@ private:
     float mPhi = XM_PIDIV4;
     float mRadius = 5.0F;
 
-    POINT mLastMousePos;
+    POINT mLastMousePos{};
 };
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
@@ -281,8 +281,8 @@ void BoxApp::BuildConstantBuffers()
     D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
 
     int boxCBufIndex = 0;
-    cbAddress += boxCBufIndex * objCBByteSize;
-    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+    cbAddress += boxCBufIndex * static_cast<unsigned long long>(objCBByteSize);
+    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
     cbvDesc.BufferLocation = cbAddress;
     cbvDesc.SizeInBytes = CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
@@ -291,7 +291,7 @@ void BoxApp::BuildConstantBuffers()
 
 void BoxApp::BuildRootSignature()
 {
-    CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+    CD3DX12_ROOT_PARAMETER slotRootParameter[1]{};
 
     CD3DX12_DESCRIPTOR_RANGE cbvTable;
     cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
@@ -325,8 +325,8 @@ void BoxApp::BuildShadersAndInputLayout()
 {
     HRESULT hr = S_OK;
 
-    mvsByteCode = CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
-    mpsByteCode = CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
+    mvsByteCode = CompileShader(L"Shaders/color.hlsl", nullptr, "VS", "vs_5_0");
+    mpsByteCode = CompileShader(L"Shaders/color.hlsl", nullptr, "PS", "ps_5_0");
 
     mInputLayout = {
         {"POSITION", 0,    DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},

@@ -13,7 +13,7 @@
 
 #pragma warning(disable : 4324)
 
-#include "C:\src\vcpkg\installed\x64-windows\include\directx\d3dx12.h"
+#include "directx/d3dx12.h"
 
 #include <D3Dcompiler.h>
 #include <DirectXCollision.h>
