@@ -1,3 +1,7 @@
+#ifndef WIN32
+#define WIN32
+#endif // !WIN32
+
 #include "D3DApp.h"
 #include "DirectXTK12/SimpleMath.h"
 
@@ -264,7 +268,7 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void BoxApp::BuildDescriptorHeaps()
 {
-    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc{};
     cbvHeapDesc.NumDescriptors = 1;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -293,7 +297,7 @@ void BoxApp::BuildRootSignature()
 {
     CD3DX12_ROOT_PARAMETER slotRootParameter[1]{};
 
-    CD3DX12_DESCRIPTOR_RANGE cbvTable;
+    CD3DX12_DESCRIPTOR_RANGE cbvTable{};
     cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
     slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
 
