@@ -4,7 +4,11 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # The part I added
-.vs/*
+.vs/
+.xmake/
+build/
+.cache/
+compile_commands.json
 
 # User-specific files
 *.rsuser
