@@ -1,4 +1,6 @@
+#ifndef WIN32
 #define WIN32
+#endif // !WIN32
 
 #include "SimpleMath.h"
 #include <iostream>
