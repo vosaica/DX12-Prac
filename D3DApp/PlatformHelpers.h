@@ -288,13 +288,13 @@ public:
             mElementByteSize = CalcConstantBufferByteSize(sizeof(T));
 
         auto heapProperties{CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD)};
-        auto resourceDesc{CD3DX12_RESOURCE_DESC::Buffer(elementCount * mElementByteSize)};
+        auto resourceDesc{CD3DX12_RESOURCE_DESC::Buffer(static_cast<UINT64>(elementCount) * mElementByteSize)};
         DirectX::ThrowIfFailed(device->CreateCommittedResource(&heapProperties,
-                                                      D3D12_HEAP_FLAG_NONE,
-                                                      &resourceDesc,
-                                                      D3D12_RESOURCE_STATE_GENERIC_READ,
-                                                      nullptr,
-                                                      IID_PPV_ARGS(&mUploadBuffer)));
+                                                               D3D12_HEAP_FLAG_NONE,
+                                                               &resourceDesc,
+                                                               D3D12_RESOURCE_STATE_GENERIC_READ,
+                                                               nullptr,
+                                                               IID_PPV_ARGS(&mUploadBuffer)));
 
         DirectX::ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData)));
 
