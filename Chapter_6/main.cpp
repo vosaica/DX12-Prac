@@ -3,7 +3,6 @@
 #endif // !WIN32
 
 #include "D3DApp.h"
-#include "DirectXTK12/SimpleMath.h"
 
 #include <DirectXColors.h>
 #include <DirectXMath.h>
@@ -17,7 +16,6 @@
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
-using namespace DirectX::SimpleMath;
 
 struct Vertex
 {
@@ -27,7 +25,7 @@ struct Vertex
 
 struct ObjectConstants
 {
-    XMFLOAT4X4 WorldViewProj = Matrix::Identity;
+    XMFLOAT4X4 WorldViewProj{1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
 };
 
 class BoxApp : public D3DApp
@@ -71,9 +69,9 @@ private:
 
     ComPtr<ID3D12PipelineState> mPSO = nullptr;
 
-    XMFLOAT4X4 mWorld = Matrix::Identity;
-    XMFLOAT4X4 mView = Matrix::Identity;
-    XMFLOAT4X4 mProj = Matrix::Identity;
+    XMFLOAT4X4 mWorld{1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
+    XMFLOAT4X4 mView{1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
+    XMFLOAT4X4 mProj{1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
 
     float mTheta = 1.5F * XM_PI;
     float mPhi = XM_PIDIV4;
@@ -327,8 +325,6 @@ void BoxApp::BuildRootSignature()
 
 void BoxApp::BuildShadersAndInputLayout()
 {
-    HRESULT hr = S_OK;
-
     mvsByteCode = CompileShader(L"Shaders/color.hlsl", nullptr, "VS", "vs_5_0");
     mpsByteCode = CompileShader(L"Shaders/color.hlsl", nullptr, "PS", "ps_5_0");
 
