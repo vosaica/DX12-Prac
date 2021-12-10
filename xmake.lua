@@ -54,11 +54,22 @@ target("Chapter_4")
     add_syslinks("User32", "Gdi32")
 
 
--- task("Copy Assets")
--- on_run(function ()
---     os.mkdir("$(buildir)/Shaders")
---     os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/release/Shaders/")
--- end)
+task("CopyAssets_Chapter_6")
+    on_run(function()
+        if is_mode("debug") then
+            if os.exists("$(buildir)/windows/x64/debug/Shaders/color.hlsl") then
+                print("color.hlsl exists")
+            else
+                os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
+            end
+        elseif is_mode("release") then
+            if os.exists("$(buildir)/windows/x64/release/Shaders/color.hlsl") then
+                print("color.hlsl exists")
+            else
+                os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/release/Shaders/")
+            end
+        end
+    end)
 
 
 target("Chapter_6")
@@ -73,10 +84,10 @@ target("Chapter_6")
     add_ldflags("/SUBSYSTEM:WINDOWS")
     add_syslinks("User32", "Gdi32", "dxguid")
 
-    -- after_build(function (target)
-    --     import("core.project.task")
-    --     task.run("Copy Assets")
-    -- end)
+    after_build(function (target)
+        import("core.project.task")
+        task.run("CopyAssets_Chapter_6")
+    end)
 
 
 target("D3DApp")
