@@ -56,7 +56,6 @@ target("Chapter_4")
 
 -- task("Copy Assets")
 -- on_run(function ()
---     -- 复制当前脚本目录下的头文件到输出目录
 --     os.mkdir("$(buildir)/Shaders")
 --     os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/release/Shaders/")
 -- end)
