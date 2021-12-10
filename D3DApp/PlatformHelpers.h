@@ -214,7 +214,7 @@ inline Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
 
     D3D12_SUBRESOURCE_DATA subResourceData = {};
     subResourceData.pData = initData;
-    subResourceData.RowPitch = byteSize;
+    subResourceData.RowPitch = byteSize; // Data size over PB level can be overflow, so we can negelect it
     subResourceData.SlicePitch = subResourceData.RowPitch;
 
     auto barrier{CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),
