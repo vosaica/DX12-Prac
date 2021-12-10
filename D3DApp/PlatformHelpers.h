@@ -160,7 +160,7 @@ struct MeshGeometry
 
     std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 
-    D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const
+    [[nodiscard]] D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const
     {
         D3D12_VERTEX_BUFFER_VIEW vbv;
         vbv.BufferLocation = VertexBufferGPU->GetGPUVirtualAddress();
@@ -170,7 +170,7 @@ struct MeshGeometry
         return vbv;
     }
 
-    D3D12_INDEX_BUFFER_VIEW IndexBufferView() const
+    [[nodiscard]] D3D12_INDEX_BUFFER_VIEW IndexBufferView() const
     {
         D3D12_INDEX_BUFFER_VIEW ibv;
         ibv.BufferLocation = IndexBufferGPU->GetGPUVirtualAddress();
@@ -285,7 +285,9 @@ public:
         // UINT   SizeInBytes;   // multiple of 256
         // } D3D12_CONSTANT_BUFFER_VIEW_DESC;
         if (isConstantBuffer)
+        {
             mElementByteSize = CalcConstantBufferByteSize(sizeof(T));
+        }
 
         auto heapProperties{CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD)};
         auto resourceDesc{CD3DX12_RESOURCE_DESC::Buffer(static_cast<UINT64>(elementCount) * mElementByteSize)};
@@ -307,19 +309,21 @@ public:
     ~UploadBuffer()
     {
         if (mUploadBuffer != nullptr)
+        {
             mUploadBuffer->Unmap(0, nullptr);
+        }
 
         mMappedData = nullptr;
     }
 
-    ID3D12Resource* Resource() const
+    [[nodiscard]] ID3D12Resource* Resource() const
     {
         return mUploadBuffer.Get();
     }
 
     void CopyData(int elementIndex, const T& data)
     {
-        memcpy(&mMappedData[elementIndex * mElementByteSize], &data, sizeof(T));
+        memcpy(&mMappedData[static_cast<size_t>(elementIndex) * mElementByteSize], &data, sizeof(T));
     }
 
 private:
