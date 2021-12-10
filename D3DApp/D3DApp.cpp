@@ -468,8 +468,6 @@ bool D3DApp::InitDirect3D()
 
     mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     mDsvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    mCbvSrvUavDescriptorSize
-        = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     // Check 4X MSAA quality support for our back buffer format.
     // All Direct3D 11 capable devices support 4X MSAA for all render

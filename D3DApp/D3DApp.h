@@ -130,7 +130,6 @@ protected:
 
     UINT mRtvDescriptorSize = 0;
     UINT mDsvDescriptorSize = 0;
-    UINT mCbvSrvUavDescriptorSize = 0;
 
     // Derived class should set these in derived constructor to customize starting values.
     std::wstring mMainWndCaption = L"d3d App";
