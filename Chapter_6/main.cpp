@@ -3,6 +3,7 @@
 #endif // !WIN32
 
 #include "D3DApp.h"
+#include "DirectXTK12/SimpleMath.h"
 
 #include <DirectXColors.h>
 #include <DirectXMath.h>
@@ -13,9 +14,10 @@
 #include <memory>
 #include <vector>
 
-using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
+using namespace DirectX::SimpleMath;
+using Microsoft::WRL::ComPtr;
 
 struct Vertex
 {
@@ -25,7 +27,7 @@ struct Vertex
 
 struct ObjectConstants
 {
-    XMFLOAT4X4 WorldViewProj{1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
+    XMFLOAT4X4 WorldViewProj = SimpleMath::Matrix::Identity;
 };
 
 class BoxApp : public D3DApp
@@ -69,9 +71,9 @@ private:
 
     ComPtr<ID3D12PipelineState> mPSO = nullptr;
 
-    XMFLOAT4X4 mWorld{1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
-    XMFLOAT4X4 mView{1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
-    XMFLOAT4X4 mProj{1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
+    XMFLOAT4X4 mWorld = SimpleMath::Matrix::Identity;
+    XMFLOAT4X4 mProj = SimpleMath::Matrix::Identity;
+    XMFLOAT4X4 mView = SimpleMath::Matrix::Identity;
 
     float mTheta = 1.5F * XM_PI;
     float mPhi = XM_PIDIV4;
