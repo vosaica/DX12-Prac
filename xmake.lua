@@ -78,7 +78,10 @@ target("D3DApp_imgui")
     set_kind("binary")
     add_deps("D3DApp")
 
-    add_packages("vcpkg::directxtk12", "vcpkg::imgui", "vcpkg::imgui[dx12-binding]", "vcpkg::imgui[win32-binding]")
+    add_packages("vcpkg::directxtk12",
+                 "vcpkg::imgui",
+                 "vcpkg::imgui[dx12-binding]",
+                 "vcpkg::imgui[win32-binding]")
 
     add_includedirs("D3DApp_imgui/")
     add_files("D3DApp_imgui/*.cpp")
