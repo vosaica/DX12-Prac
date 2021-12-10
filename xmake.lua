@@ -54,6 +54,14 @@ target("Chapter_4")
     add_syslinks("User32", "Gdi32")
 
 
+-- task("Copy Assets")
+-- on_run(function ()
+--     -- 复制当前脚本目录下的头文件到输出目录
+--     os.mkdir("$(buildir)/Shaders")
+--     os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/release/Shaders/")
+-- end)
+
+
 target("Chapter_6")
     set_kind("binary")
     add_deps("D3DApp")
@@ -65,6 +73,11 @@ target("Chapter_6")
 
     add_ldflags("/SUBSYSTEM:WINDOWS")
     add_syslinks("User32", "Gdi32", "dxguid")
+
+    -- after_build(function (target)
+    --     import("core.project.task")
+    --     task.run("Copy Assets")
+    -- end)
 
 
 target("D3DApp")
