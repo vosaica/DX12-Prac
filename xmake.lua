@@ -25,20 +25,22 @@ add_requires("vcpkg::directx-headers",
 add_includedirs("c:/src/vcpkg/installed/x64-windows-static/include")
 
 
-target("D3DApp")
-    set_kind("static")
-
-    add_includedirs("D3DApp/", {public = true})
-    add_files("D3DApp/*.cpp")
-
-
-target("DXTK")
+target("Chapter_1")
     set_kind("binary")
 
-    add_packages("vcpkg::directxtk12")
+    add_files("Chapter_1/*.cpp")
 
-    add_includedirs("DXTK/")
-    add_files("DXTK/*.cpp")
+
+target("Chapter_2")
+    set_kind("binary")
+
+    add_files("Chapter_2/*.cpp")
+
+
+target("Chapter_3")
+    set_kind("binary")
+
+    add_files("Chapter_3/*.cpp")
 
 
 target("Chapter_4")
@@ -65,14 +67,30 @@ target("Chapter_6")
     add_syslinks("User32", "Gdi32", "dxguid")
 
 
+target("D3DApp")
+    set_kind("static")
+
+    add_includedirs("D3DApp/", {public = true})
+    add_files("D3DApp/*.cpp")
+
+
 target("D3DApp_imgui")
     set_kind("binary")
     add_deps("D3DApp")
 
-    add_packages("vcpkg::imgui", "vcpkg::imgui[dx12-binding]", "vcpkg::imgui[win32-binding]")
+    add_packages("vcpkg::directxtk12", "vcpkg::imgui", "vcpkg::imgui[dx12-binding]", "vcpkg::imgui[win32-binding]")
 
     add_includedirs("D3DApp_imgui/")
     add_files("D3DApp_imgui/*.cpp")
 
     add_ldflags("/SUBSYSTEM:WINDOWS")
     add_syslinks("User32", "Gdi32", "dxguid")
+
+
+target("DXTK")
+    set_kind("binary")
+
+    add_packages("vcpkg::directxtk12")
+
+    add_includedirs("DXTK/")
+    add_files("DXTK/*.cpp")
