@@ -112,6 +112,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 
 BoxApp::BoxApp(HINSTANCE hInstance) : D3DApp(hInstance)
 {
+    mMainWndCaption = L"Box App";
 }
 
 BoxApp::~BoxApp() = default;
