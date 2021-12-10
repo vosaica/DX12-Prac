@@ -18,12 +18,12 @@ std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMVECTOR v)
 // 一个XMMATRIX是四个XMVECTOR，所以在一个函数的FXMVECTOR不超过两个时，第一个XMMATRIX应该为FXMMATRIX，其余为CXMMATRIX
 std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMMATRIX m)
 {
-    for (int i = 0; i < 4; ++i)
+    for (auto i : m.r)
     {
-        os << XMVectorGetX(m.r[i]) << '\t';
-        os << XMVectorGetY(m.r[i]) << '\t';
-        os << XMVectorGetZ(m.r[i]) << '\t';
-        os << XMVectorGetW(m.r[i]) << '\n';
+        os << XMVectorGetX(i) << '\t';
+        os << XMVectorGetY(i) << '\t';
+        os << XMVectorGetZ(i) << '\t';
+        os << XMVectorGetW(i) << '\n';
     }
     return os;
 }
@@ -42,9 +42,25 @@ int main()
     std::cout.setf(std::ios_base::boolalpha);
     std::cout.precision(8);
 
-    XMFLOAT4X4 f4x4A{1.0F, 3.0F, 15.0F, 0.0F, 2.0F, 12.0F, 3.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
+    XMFLOAT4X4
+    f4x4A{1.0F, 3.0F, 15.0F, 0.0F, 2.0F, 12.0F, 3.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
     XMMATRIX mA = XMLoadFloat4x4(&f4x4A);
-    XMMATRIX mB = XMMatrixSet(3.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F);
+    XMMATRIX mB = XMMatrixSet(3.0F,
+                              1.0F,
+                              0.0F,
+                              0.0F,
+                              0.0F,
+                              1.0F,
+                              0.0F,
+                              0.0F,
+                              0.0F,
+                              0.0F,
+                              1.0F,
+                              0.0F,
+                              0.0F,
+                              0.0F,
+                              0.0F,
+                              1.0F);
     XMVECTOR fDetB = XMMatrixDeterminant(mB);
 
     std::cout << "mA:\n" << mA << std::endl;

@@ -32,7 +32,7 @@ int main()
     std::cout.precision(8);
 
     XMFLOAT2 f2A{12.0F, 10.0F};
-    const XMVECTORF32 vA{10.0F, 1.0F}; // 常量类型用这个
+    const XMVECTORF32 vA{{{10.0F, 1.0F}}}; // 常量类型用这个
     auto vB = XMLoadFloat2(&f2A);
     auto vC = vA * vB;
 

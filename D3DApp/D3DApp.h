@@ -70,7 +70,7 @@ protected:
     {
     }
 
-protected:
+    // Initialization and management of DirectX
     bool InitMainWindow();
     bool InitDirect3D();
     void CreateCommandObjects();
@@ -86,9 +86,9 @@ protected:
 
     void LogAdapters();
     void LogAdapterOutputs(const Microsoft::WRL::ComPtr<IDXGIAdapter>& adapter);
-    void LogOutputDisplayModes(const Microsoft::WRL::ComPtr<IDXGIOutput>& output, DXGI_FORMAT format);
+    static void LogOutputDisplayModes(const Microsoft::WRL::ComPtr<IDXGIOutput>& output, DXGI_FORMAT format);
 
-protected:
+    // Fields
     static D3DApp* mApp;
 
     HINSTANCE mhAppInst = nullptr; // application instance handle

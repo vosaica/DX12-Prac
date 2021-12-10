@@ -36,18 +36,18 @@ public:
     BoxApp(HINSTANCE hInstance);
     BoxApp(const BoxApp& rhs) = delete;
     BoxApp& operator=(const BoxApp& rhs) = delete;
-    ~BoxApp();
+    ~BoxApp() override;
 
-    virtual bool Initialize() override;
+    bool Initialize() override;
 
 private:
-    virtual void OnResize() override;
-    virtual void Update(const Timer& gt) override;
-    virtual void Draw(const Timer& gt) override;
+    void OnResize() override;
+    void Update(const Timer& gt) override;
+    void Draw(const Timer& gt) override;
 
-    virtual void OnMouseDown(WPARAM btnState, int x, int y) override;
-    virtual void OnMouseUp(WPARAM btnState, int x, int y) override;
-    virtual void OnMouseMove(WPARAM btnState, int x, int y) override;
+    void OnMouseDown(WPARAM btnState, int x, int y) override;
+    void OnMouseUp(WPARAM btnState, int x, int y) override;
+    void OnMouseMove(WPARAM btnState, int x, int y) override;
 
     void BuildDescriptorHeaps();
     void BuildConstantBuffers();
@@ -56,7 +56,7 @@ private:
     void BuildBoxGeometry();
     void BuildPSO();
 
-private:
+    // Fields
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
     ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
 
@@ -114,9 +114,7 @@ BoxApp::BoxApp(HINSTANCE hInstance) : D3DApp(hInstance)
 {
 }
 
-BoxApp::~BoxApp()
-{
-}
+BoxApp::~BoxApp() = default;
 
 bool BoxApp::Initialize()
 {
@@ -197,7 +195,7 @@ void BoxApp::Draw(const Timer& gt)
 
     auto currBackBuffer = CurrentBackBufferView();
     auto currDepthStencil = DepthStencilView();
-    mCommandList->OMSetRenderTargets(1, &currBackBuffer, true, &currDepthStencil);
+    mCommandList->OMSetRenderTargets(1, &currBackBuffer, TRUE, &currDepthStencil);
 
     ID3D12DescriptorHeap* descriptorHeaps[] = {mCbvHeap.Get()};
     mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);

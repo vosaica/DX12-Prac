@@ -18,12 +18,12 @@ std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMVECTOR v)
 // 一个XMMATRIX是四个XMVECTOR，所以在一个函数的FXMVECTOR不超过两个时，第一个XMMATRIX应该为FXMMATRIX，其余为CXMMATRIX
 std::ostream& XM_CALLCONV operator<<(std::ostream& os, FXMMATRIX m)
 {
-    for (int i = 0; i < 4; ++i)
+    for (auto i : m.r)
     {
-        os << XMVectorGetX(m.r[i]) << '\t';
-        os << XMVectorGetY(m.r[i]) << '\t';
-        os << XMVectorGetZ(m.r[i]) << '\t';
-        os << XMVectorGetW(m.r[i]) << '\n';
+        os << XMVectorGetX(i) << '\t';
+        os << XMVectorGetY(i) << '\t';
+        os << XMVectorGetZ(i) << '\t';
+        os << XMVectorGetW(i) << '\n';
     }
     return os;
 }

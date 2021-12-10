@@ -39,19 +39,19 @@ public:
     BoxApp(HINSTANCE hInstance);
     BoxApp(const BoxApp& rhs) = delete;
     BoxApp& operator=(const BoxApp& rhs) = delete;
-    ~BoxApp();
+    ~BoxApp() override;
 
-    virtual bool Initialize() override;
-    virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
+    bool Initialize() override;
+    LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 
 private:
-    virtual void OnResize() override;
-    virtual void Update(const Timer& gt) override;
-    virtual void Draw(const Timer& gt) override;
+    void OnResize() override;
+    void Update(const Timer& gt) override;
+    void Draw(const Timer& gt) override;
 
-    virtual void OnMouseDown(WPARAM btnState, int x, int y) override;
-    virtual void OnMouseUp(WPARAM btnState, int x, int y) override;
-    virtual void OnMouseMove(WPARAM btnState, int x, int y) override;
+    void OnMouseDown(WPARAM btnState, int x, int y) override;
+    void OnMouseUp(WPARAM btnState, int x, int y) override;
+    void OnMouseMove(WPARAM btnState, int x, int y) override;
 
     void BuildDescriptorHeaps();
     void BuildConstantBuffers();
@@ -62,7 +62,7 @@ private:
 
     void CreateRtvAndDsvDescriptorHeaps() override;
 
-private:
+    // Fields
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
     ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
     ComPtr<ID3D12DescriptorHeap> mSrvHeap = nullptr;
@@ -121,9 +121,7 @@ BoxApp::BoxApp(HINSTANCE hInstance) : D3DApp(hInstance)
 {
 }
 
-BoxApp::~BoxApp()
-{
-}
+BoxApp::~BoxApp() = default;
 
 bool BoxApp::Initialize()
 {
@@ -217,7 +215,7 @@ void BoxApp::Draw(const Timer& gt)
 
     auto currBackBuffer = CurrentBackBufferView();
     auto currDepthStencil = DepthStencilView();
-    mCommandList->OMSetRenderTargets(1, &currBackBuffer, true, &currDepthStencil);
+    mCommandList->OMSetRenderTargets(1, &currBackBuffer, TRUE, &currDepthStencil);
 
     ID3D12DescriptorHeap* descriptorHeaps[] = {mCbvHeap.Get()};
     mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -246,7 +244,9 @@ void BoxApp::Draw(const Timer& gt)
     // code to learn more about Dear ImGui!).
     bool show_demo_window = true;
     if (show_demo_window)
+    {
         ImGui::ShowDemoWindow(&show_demo_window);
+    }
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
@@ -257,16 +257,17 @@ void BoxApp::Draw(const Timer& gt)
         ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
         ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
 
-        ImGui::SliderFloat("float", &mPhi, 0.1f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("float", &mPhi, 0.1F, 1.0F); // Edit 1 float using a slider from 0.0f to 1.0f
 
-        if (ImGui::Button(
-                "Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
+        if (ImGui::Button("Button"))
+        { // Buttons return true when clicked (most widgets return true when edited/activated)
             counter++;
+        }
         ImGui::SameLine();
         ImGui::Text("counter = %d", counter);
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                    1000.0f / ImGui::GetIO().Framerate,
+                    1000.0F / ImGui::GetIO().Framerate,
                     ImGui::GetIO().Framerate);
         ImGui::End();
     }
@@ -480,9 +481,9 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 LRESULT BoxApp::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam) != 0)
     {
-        return true;
+        return TRUE;
     }
     return D3DApp::MsgProc(hWnd, msg, wParam, lParam);
 }
