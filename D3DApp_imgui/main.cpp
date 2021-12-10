@@ -60,12 +60,12 @@ private:
     void BuildBoxGeometry();
     void BuildPSO();
 
-    void CreateRtvAndDsvDescriptorHeaps() override;
+    void CreateImguiDescriptorHeaps();
 
     // Fields
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
     ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> mSrvHeap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> mImguiSrvHeap = nullptr;
 
     std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
 
@@ -131,6 +131,7 @@ bool BoxApp::Initialize()
         return false;
     }
 
+    CreateImguiDescriptorHeaps();
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -140,9 +141,9 @@ bool BoxApp::Initialize()
     ImGui_ImplDX12_Init(md3dDevice.Get(),
                         3,
                         DXGI_FORMAT_R8G8B8A8_UNORM,
-                        mSrvHeap.Get(),
-                        mSrvHeap.Get()->GetCPUDescriptorHandleForHeapStart(),
-                        mSrvHeap.Get()->GetGPUDescriptorHandleForHeapStart());
+                        mImguiSrvHeap.Get(),
+                        mImguiSrvHeap.Get()->GetCPUDescriptorHandleForHeapStart(),
+                        mImguiSrvHeap.Get()->GetGPUDescriptorHandleForHeapStart());
 
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
@@ -272,7 +273,7 @@ void BoxApp::Draw(const Timer& gt)
                     ImGui::GetIO().Framerate);
         ImGui::End();
     }
-    mCommandList->SetDescriptorHeaps(1, mSrvHeap.GetAddressOf());
+    mCommandList->SetDescriptorHeaps(1, mImguiSrvHeap.GetAddressOf());
     ImGui::Render();
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
 
@@ -466,16 +467,15 @@ void BoxApp::BuildPSO()
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
 }
 
-void BoxApp::CreateRtvAndDsvDescriptorHeaps()
+void BoxApp::CreateImguiDescriptorHeaps()
 {
-    D3DApp::CreateRtvAndDsvDescriptorHeaps();
-
-    D3D12_DESCRIPTOR_HEAP_DESC SrvHeapDesc{};
-    SrvHeapDesc.NumDescriptors = 1;
-    SrvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    SrvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    SrvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&SrvHeapDesc, IID_PPV_ARGS(mSrvHeap.GetAddressOf())));
+    D3D12_DESCRIPTOR_HEAP_DESC ImguiSrvHeapDesc{};
+    ImguiSrvHeapDesc.NumDescriptors = 1;
+    ImguiSrvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    ImguiSrvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    ImguiSrvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(
+        md3dDevice->CreateDescriptorHeap(&ImguiSrvHeapDesc, IID_PPV_ARGS(mImguiSrvHeap.GetAddressOf())));
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
