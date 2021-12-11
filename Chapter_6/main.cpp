@@ -345,10 +345,31 @@ void BoxApp::BuildBoxGeometry()
                                       Vertex({XMFLOAT3(-1.0F, +1.0F, +1.0F), XMFLOAT4(Colors::Yellow)}),
                                       Vertex({XMFLOAT3(+1.0F, +1.0F, +1.0F), XMFLOAT4(Colors::Cyan)}),
                                       Vertex({XMFLOAT3(+1.0F, -1.0F, +1.0F), XMFLOAT4(Colors::Magenta)})};
+    // clang-format off
+    std::array<std::uint16_t, 36> indices = {// front
+                                             0, 1, 2,
+                                             0, 2, 3,
 
-    std::array<std::uint16_t, 36> indices = {0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 4, 5, 1, 4, 1, 0,
-                                             3, 2, 6, 3, 6, 7, 1, 5, 6, 1, 6, 2, 4, 0, 3, 4, 3, 7};
+                                             // back
+                                             4, 6, 5,
+                                             4, 7, 6,
 
+                                             // left
+                                             4, 5, 1,
+                                             4, 1, 0,
+
+                                             // right
+                                             3, 2, 6,
+                                             3, 6, 7,
+
+                                             // top
+                                             1, 5, 6,
+                                             1, 6, 2,
+
+                                             // bottom
+                                             4, 0, 3,
+                                             4, 3, 7};
+    // clang-format on
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
     const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
