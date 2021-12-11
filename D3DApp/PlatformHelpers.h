@@ -11,7 +11,6 @@
 #ifndef _PLATFORMHELPERS_
 #define _PLATFORMHELPERS_
 
-#include <basetsd.h>
 #pragma warning(disable : 4324)
 
 #include "directx/d3dx12.h"
@@ -22,6 +21,7 @@
 #include <cstring>
 #include <d3d12.h>
 #include <exception>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -264,6 +264,23 @@ inline Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(const std::wstring& filena
     DirectX::ThrowIfFailed(hr);
 
     return byteCode;
+}
+
+Microsoft::WRL::ComPtr<ID3DBlob> LoadBinary(const std::wstring& filename)
+{
+    std::ifstream fin(filename, std::ios::binary);
+
+    fin.seekg(0, std::ios_base::end);
+    std::ifstream::pos_type size = (int)fin.tellg();
+    fin.seekg(0, std::ios_base::beg);
+
+    Microsoft::WRL::ComPtr<ID3DBlob> blob;
+    DirectX::ThrowIfFailed(D3DCreateBlob(size, blob.GetAddressOf()));
+
+    fin.read((char*)blob->GetBufferPointer(), size);
+    fin.close();
+
+    return blob;
 }
 
 inline UINT CalcConstantBufferByteSize(UINT byteSize)
