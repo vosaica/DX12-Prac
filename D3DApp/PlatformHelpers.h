@@ -11,6 +11,7 @@
 #ifndef _PLATFORMHELPERS_
 #define _PLATFORMHELPERS_
 
+#include <basetsd.h>
 #pragma warning(disable : 4324)
 
 #include "directx/d3dx12.h"
@@ -216,7 +217,7 @@ inline Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
     subResourceData.pData = initData;
     // On 64bit platform, only data size over 9EB may be overflow, so we can negelect it
     // On 32bit platform, the data size needs to be over 2GB
-    subResourceData.RowPitch = byteSize;
+    subResourceData.RowPitch = static_cast<LONG_PTR>(byteSize);
     subResourceData.SlicePitch = subResourceData.RowPitch;
 
     auto barrier{CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),
