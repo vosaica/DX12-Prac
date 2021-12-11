@@ -55,21 +55,13 @@ target("Chapter_4")
 
 
 task("CopyAssets_Chapter_6")
-    on_run(function()
-        if is_mode("debug") then
-            if os.exists("$(buildir)/windows/x64/debug/Shaders/color.hlsl") then
-                print("color.hlsl exists")
-            else
-                os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
-            end
-        elseif is_mode("release") then
-            if os.exists("$(buildir)/windows/x64/release/Shaders/color.hlsl") then
-                print("color.hlsl exists")
-            else
-                os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/release/Shaders/")
-            end
-        end
-    end)
+on_run(function()
+    if is_mode("debug") then
+        os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
+    elseif is_mode("release") then
+        os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/release/Shaders/")
+    end
+end)
 
 
 target("Chapter_6")
