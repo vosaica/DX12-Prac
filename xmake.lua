@@ -61,6 +61,7 @@ on_run(function()
     elseif is_mode("release") then
         os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/release/Shaders/")
     end
+    print("color.hlsl copied")
 end)
 
 
