@@ -163,7 +163,7 @@ struct MeshGeometry
 
     [[nodiscard]] D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const
     {
-        D3D12_VERTEX_BUFFER_VIEW vbv;
+        D3D12_VERTEX_BUFFER_VIEW vbv{};
         vbv.BufferLocation = VertexBufferGPU->GetGPUVirtualAddress();
         vbv.StrideInBytes = VertexByteStride;
         vbv.SizeInBytes = VertexBufferByteSize;
@@ -173,7 +173,7 @@ struct MeshGeometry
 
     [[nodiscard]] D3D12_INDEX_BUFFER_VIEW IndexBufferView() const
     {
-        D3D12_INDEX_BUFFER_VIEW ibv;
+        D3D12_INDEX_BUFFER_VIEW ibv{};
         ibv.BufferLocation = IndexBufferGPU->GetGPUVirtualAddress();
         ibv.Format = IndexFormat;
         ibv.SizeInBytes = IndexBufferByteSize;
@@ -266,7 +266,7 @@ inline Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(const std::wstring& filena
     return byteCode;
 }
 
-Microsoft::WRL::ComPtr<ID3DBlob> LoadBinary(const std::wstring& filename)
+inline Microsoft::WRL::ComPtr<ID3DBlob> LoadShaderBinary(const std::wstring& filename)
 {
     std::ifstream fin(filename, std::ios::binary);
 
