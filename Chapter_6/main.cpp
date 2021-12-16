@@ -326,8 +326,8 @@ void BoxApp::BuildRootSignature()
 
 void BoxApp::BuildShadersAndInputLayout()
 {
-    mvsByteCode = CompileShader(L"Shaders/color.hlsl", nullptr, "VS", "vs_5_0");
-    mpsByteCode = CompileShader(L"Shaders/color.hlsl", nullptr, "PS", "ps_5_0");
+    mvsByteCode = CompileShader(L"Shaders/Chapter_6.hlsl", nullptr, "VS", "vs_5_0");
+    mpsByteCode = CompileShader(L"Shaders/Chapter_6.hlsl", nullptr, "PS", "ps_5_0");
 
     mInputLayout = {
         {"POSITION", 0,    DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},

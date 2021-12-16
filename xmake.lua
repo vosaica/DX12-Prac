@@ -57,11 +57,11 @@ target("Chapter_4")
 task("CopyAssets_Chapter_6")
 on_run(function()
     if is_mode("debug") then
-        os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
+        os.cp("$(projectdir)/Chapter_6/Shaders/Chapter_6.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
     elseif is_mode("release") then
-        os.cp("$(projectdir)/Chapter_6/Shaders/color.hlsl", "$(buildir)/windows/x64/release/Shaders/")
+        os.cp("$(projectdir)/Chapter_6/Shaders/Chapter_6.hlsl", "$(buildir)/windows/x64/release/Shaders/")
     end
-    print("color.hlsl copied")
+    print("Chapter_6.hlsl copied")
 end)
 
 
@@ -90,6 +90,16 @@ target("D3DApp")
     add_files("D3DApp/*.cpp")
 
 
+task("CopyAssets_D3DApp_imgui")
+on_run(function()
+    if is_mode("debug") then
+        os.cp("$(projectdir)/D3DApp_imgui/Shaders/D3DApp_imgui.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
+    elseif is_mode("release") then
+        os.cp("$(projectdir)/D3DApp_imgui/Shaders/D3DApp_imgui.hlsl", "$(buildir)/windows/x64/release/Shaders/")
+    end
+    print("D3DApp_imgui.hlsl copied")
+end)
+
 target("D3DApp_imgui")
     set_kind("binary")
     add_deps("D3DApp")
@@ -104,6 +114,11 @@ target("D3DApp_imgui")
 
     add_ldflags("/SUBSYSTEM:WINDOWS")
     add_syslinks("User32", "Gdi32", "dxguid")
+
+    after_build(function (target)
+        import("core.project.task")
+        task.run("CopyAssets_D3DApp_imgui")
+    end)
 
 
 target("DXTK")
