@@ -17,6 +17,7 @@
 
 #include <D3Dcompiler.h>
 #include <DirectXCollision.h>
+#include <array>
 #include <cstdlib>
 #include <cstring>
 #include <d3d12.h>
@@ -141,34 +142,38 @@ struct SubmeshGeometry
     DirectX::BoundingBox Bounds;
 };
 
+template <size_t N>
 struct MeshGeometry
 {
     std::string Name;
 
-    Microsoft::WRL::ComPtr<ID3DBlob> VertexBufferCPU = nullptr;
-    Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU = nullptr;
+    std::array<Microsoft::WRL::ComPtr<ID3DBlob>, N> VertexBufferCPU{};
+    Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU{};
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
-    Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
+    std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, N> VertexBufferGPU{};
+    Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferGPU{};
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferUploader = nullptr;
-    Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
+    std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, N> VertexBufferUploader{};
+    Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferUploader{};
 
-    UINT VertexByteStride = 0;
-    UINT VertexBufferByteSize = 0;
+    std::array<D3D12_VERTEX_BUFFER_VIEW, N> VertexBufferViews{};
+
+    std::array<UINT, N> VertexByteStride{};
+    std::array<UINT, N> VertexBufferByteSize{};
     DXGI_FORMAT IndexFormat = DXGI_FORMAT_R16_UINT;
     UINT IndexBufferByteSize = 0;
 
     std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 
-    [[nodiscard]] D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const
+    [[nodiscard]] D3D12_VERTEX_BUFFER_VIEW* VertexBufferView()
     {
-        D3D12_VERTEX_BUFFER_VIEW vbv{};
-        vbv.BufferLocation = VertexBufferGPU->GetGPUVirtualAddress();
-        vbv.StrideInBytes = VertexByteStride;
-        vbv.SizeInBytes = VertexBufferByteSize;
-
-        return vbv;
+        for (size_t i = 0; i < N; ++i)
+        {
+            VertexBufferViews[i].BufferLocation = VertexBufferGPU[i]->GetGPUVirtualAddress();
+            VertexBufferViews[i].StrideInBytes = static_cast<UINT>(VertexByteStride[i]);
+            VertexBufferViews[i].SizeInBytes = VertexBufferByteSize[i];
+        }
+        return VertexBufferViews.data();
     }
 
     [[nodiscard]] D3D12_INDEX_BUFFER_VIEW IndexBufferView() const
@@ -183,7 +188,10 @@ struct MeshGeometry
 
     void DisposeUploaders()
     {
-        VertexBufferUploader = nullptr;
+        for (auto& i : VertexBufferUploader)
+        {
+            i = nullptr;
+        }
         IndexBufferUploader = nullptr;
     }
 };
