@@ -165,7 +165,7 @@ struct MeshGeometry
 
     std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 
-    [[nodiscard]] D3D12_VERTEX_BUFFER_VIEW* VertexBufferView()
+    [[nodiscard]] D3D12_VERTEX_BUFFER_VIEW* GetVertexBufferView()
     {
         for (size_t i = 0; i < N; ++i)
         {

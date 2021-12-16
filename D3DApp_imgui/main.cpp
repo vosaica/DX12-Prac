@@ -24,13 +24,13 @@ using Microsoft::WRL::ComPtr;
 
 struct Vertex
 {
-    XMFLOAT3 Pos;
-    XMFLOAT4 Color;
+    XMFLOAT3 Pos{};
+    XMFLOAT4 Color{};
 };
 
 struct ObjectConstants
 {
-    XMFLOAT4X4 WorldViewProj = SimpleMath::Matrix::Identity;
+    XMFLOAT4X4 WorldViewProj{SimpleMath::Matrix::Identity};
 };
 
 class BoxApp : public D3DApp
@@ -63,28 +63,28 @@ private:
     void CreateImguiDescriptorHeaps();
 
     // Fields
-    ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-    ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> mImguiSrvHeap = nullptr;
+    ComPtr<ID3D12RootSignature> mRootSignature{};
+    ComPtr<ID3D12DescriptorHeap> mCbvHeap{};
+    ComPtr<ID3D12DescriptorHeap> mImguiSrvHeap{};
 
-    std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
+    std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB{};
 
     std::unique_ptr<MeshGeometry<1>> mBoxGeo{};
 
-    ComPtr<ID3DBlob> mvsByteCode = nullptr;
-    ComPtr<ID3DBlob> mpsByteCode = nullptr;
+    ComPtr<ID3DBlob> mvsByteCode{};
+    ComPtr<ID3DBlob> mpsByteCode{};
 
-    std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
+    std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout{};
 
-    ComPtr<ID3D12PipelineState> mPSO = nullptr;
+    ComPtr<ID3D12PipelineState> mPSO{};
 
-    XMFLOAT4X4 mWorld = SimpleMath::Matrix::Identity;
-    XMFLOAT4X4 mProj = SimpleMath::Matrix::Identity;
-    XMFLOAT4X4 mView = SimpleMath::Matrix::Identity;
+    XMFLOAT4X4 mWorld{SimpleMath::Matrix::Identity};
+    XMFLOAT4X4 mProj{SimpleMath::Matrix::Identity};
+    XMFLOAT4X4 mView{SimpleMath::Matrix::Identity};
 
-    float mTheta = 1.5F * XM_PI;
-    float mPhi = XM_PIDIV4;
-    float mRadius = 5.0F;
+    float mTheta{1.5F * XM_PI};
+    float mPhi = {XM_PIDIV4};
+    float mRadius{5.0F};
 
     POINT mLastMousePos{};
 };
@@ -223,9 +223,8 @@ void BoxApp::Draw(const Timer& gt)
     mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-    auto vbv = mBoxGeo->VertexBufferView()[0];
     auto ibv = mBoxGeo->IndexBufferView();
-    mCommandList->IASetVertexBuffers(0, 1, &vbv);
+    mCommandList->IASetVertexBuffers(0, 1, mBoxGeo->GetVertexBufferView());
     mCommandList->IASetIndexBuffer(&ibv);
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
