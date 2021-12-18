@@ -148,6 +148,11 @@ inline std::wstring cstring2wstring(const char* str)
 }
 
 // Below are added Helpers from the d3dUtils.h
+inline UINT CalcConstantBufferByteSize(UINT byteSize)
+{
+    return (byteSize + 255) & ~255;
+}
+
 struct SubmeshGeometry
 {
     UINT IndexCount = 0;
@@ -210,11 +215,6 @@ struct MeshGeometry
         IndexBufferUploader = nullptr;
     }
 };
-
-inline UINT CalcConstantBufferByteSize(UINT byteSize)
-{
-    return (byteSize + 255) & ~255;
-}
 
 template <typename T>
 class UploadBuffer
