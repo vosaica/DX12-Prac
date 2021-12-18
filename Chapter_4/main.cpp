@@ -4,6 +4,7 @@
 #include <DirectXColors.h>
 
 using namespace DirectX;
+using namespace D3DUtils;
 
 class InitDirect3DApp : public D3DApp
 {

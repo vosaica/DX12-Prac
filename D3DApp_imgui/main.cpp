@@ -20,6 +20,7 @@
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 using namespace DirectX::SimpleMath;
+using namespace D3DUtils;
 using Microsoft::WRL::ComPtr;
 
 struct Vertex
