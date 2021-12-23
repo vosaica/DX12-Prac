@@ -281,6 +281,27 @@ private:
     UINT mElementByteSize = 0;
     bool mIsConstantBuffer = false;
 };
+
+template <typename ObjectConstants, typename PassConstants>
+struct FrameResource
+{
+public:
+    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount)
+    {
+        DirectX::ThrowIfFailed(
+            device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&CmdListAlloc)));
+    }
+    FrameResource(const FrameResource& rhs) = delete;
+    FrameResource& operator=(const FrameResource& rhs) = delete;
+    ~FrameResource() = default;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CmdListAlloc{};
+
+    std::unique_ptr<UploadBuffer<PassConstants>> PassCB{};
+    std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB{};
+
+    UINT64 Fence = 0;
+};
 } // namespace D3DUtils
 
 #endif // _PLATFORMHELPERS_
