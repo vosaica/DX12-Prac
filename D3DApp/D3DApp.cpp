@@ -234,8 +234,8 @@ void D3DApp::OnResize()
 
     // Execute the resize commands.
     ThrowIfFailed(mCommandList->Close());
-    ID3D12CommandList* cmdsLists[] = {mCommandList.Get()};
-    mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+    std::array<ID3D12CommandList*, 1> cmdsLists{mCommandList.Get()};
+    mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdsLists.size()), cmdsLists.data());
 
     // Wait until resize is complete.
     FlushCommandQueue();
