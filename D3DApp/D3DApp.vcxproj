@@ -19,14 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\PlatformHelpers.cpp" />
+    <ClCompile Include="..\Shared\Timer.cpp" />
     <ClCompile Include="D3DApp.cpp" />
-    <ClCompile Include="PlatformHelpers.cpp" />
-    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3DApp.h" />
-    <ClInclude Include="PlatformHelpers.h" />
-    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

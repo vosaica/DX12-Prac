@@ -14,8 +14,8 @@
 #include <crtdbg.h>
 #endif
 
-#include "PlatformHelpers.h"
-#include "Timer.h"
+#include "../Shared/PlatformHelpers.h"
+#include "../Shared/Timer.h"
 
 #include <array>
 #include <d3d12.h>
