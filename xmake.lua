@@ -54,17 +54,6 @@ target("Chapter_4")
     add_syslinks("User32", "Gdi32")
 
 
-task("CopyAssets_Chapter_6")
-on_run(function()
-    if is_mode("debug") then
-        os.cp("$(projectdir)/Chapter_6/Shaders/Chapter_6.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
-    elseif is_mode("release") then
-        os.cp("$(projectdir)/Chapter_6/Shaders/Chapter_6.hlsl", "$(buildir)/windows/x64/release/Shaders/")
-    end
-    print("Chapter_6.hlsl copied")
-end)
-
-
 target("Chapter_6")
     set_kind("binary")
     add_deps("D3DApp")
@@ -83,22 +72,30 @@ target("Chapter_6")
     end)
 
 
+target("Chapter_7")
+    set_kind("binary")
+    add_deps("D3DApp")
+
+    add_packages("vcpkg::directxtk12")
+
+    add_includedirs("Chapter_7/")
+    add_files("Chapter_7/*.cpp", "Shared/GeometryGenerator.cpp", "Shared/PlatformHelpers.cpp")
+
+    add_ldflags("/SUBSYSTEM:WINDOWS")
+    add_syslinks("User32", "Gdi32", "dxguid")
+
+    after_build(function (target)
+        import("core.project.task")
+        task.run("CopyAssets_Chapter_7")
+    end)
+
+
 target("D3DApp")
     set_kind("static")
 
     add_includedirs("D3DApp/", {public = true})
-    add_files("D3DApp/*.cpp")
+    add_files("D3DApp/*.cpp", "Shared/PlatformHelpers.cpp", "Shared/Timer.cpp")
 
-
-task("CopyAssets_D3DApp_imgui")
-on_run(function()
-    if is_mode("debug") then
-        os.cp("$(projectdir)/D3DApp_imgui/Shaders/D3DApp_imgui.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
-    elseif is_mode("release") then
-        os.cp("$(projectdir)/D3DApp_imgui/Shaders/D3DApp_imgui.hlsl", "$(buildir)/windows/x64/release/Shaders/")
-    end
-    print("D3DApp_imgui.hlsl copied")
-end)
 
 target("D3DApp_imgui")
     set_kind("binary")
@@ -128,3 +125,36 @@ target("DXTK")
 
     add_includedirs("DXTK/")
     add_files("DXTK/*.cpp")
+
+
+task("CopyAssets_Chapter_6")
+    on_run(function()
+        if is_mode("debug") then
+            os.cp("$(projectdir)/Chapter_6/Shaders/Chapter_6.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
+        elseif is_mode("release") then
+            os.cp("$(projectdir)/Chapter_6/Shaders/Chapter_6.hlsl", "$(buildir)/windows/x64/release/Shaders/")
+        end
+        print("Chapter_6.hlsl copied")
+    end)
+
+
+task("CopyAssets_Chapter_7")
+    on_run(function()
+        if is_mode("debug") then
+            os.cp("$(projectdir)/Chapter_7/Shaders/Chapter_7.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
+        elseif is_mode("release") then
+            os.cp("$(projectdir)/Chapter_7/Shaders/Chapter_7.hlsl", "$(buildir)/windows/x64/release/Shaders/")
+        end
+        print("Chapter_7.hlsl copied")
+    end)
+
+
+task("CopyAssets_D3DApp_imgui")
+    on_run(function()
+        if is_mode("debug") then
+            os.cp("$(projectdir)/D3DApp_imgui/Shaders/D3DApp_imgui.hlsl", "$(buildir)/windows/x64/debug/Shaders/")
+        elseif is_mode("release") then
+            os.cp("$(projectdir)/D3DApp_imgui/Shaders/D3DApp_imgui.hlsl", "$(buildir)/windows/x64/release/Shaders/")
+        end
+        print("D3DApp_imgui.hlsl copied")
+    end)
