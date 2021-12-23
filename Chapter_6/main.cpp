@@ -139,8 +139,8 @@ bool BoxApp::Initialize()
     BuildPSO();
 
     ThrowIfFailed(mCommandList->Close());
-    ID3D12CommandList* cmdLists[] = {mCommandList.Get()};
-    mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+    std::array<ID3D12CommandList*, 1> cmdLists{mCommandList.Get()};
+    mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdLists.size()), cmdLists.data());
 
     FlushCommandQueue();
 
@@ -203,8 +203,8 @@ void BoxApp::Draw(const Timer& gt)
     auto currDepthStencil = DepthStencilView();
     mCommandList->OMSetRenderTargets(1, &currBackBuffer, TRUE, &currDepthStencil);
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = {mCbvHeap.Get()};
-    mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+    std::array<ID3D12DescriptorHeap*, 1> descriptorHeaps{mCbvHeap.Get()};
+    mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
     auto ibv = mBoxGeo->IndexBufferView();
@@ -222,8 +222,8 @@ void BoxApp::Draw(const Timer& gt)
 
     ThrowIfFailed(mCommandList->Close());
 
-    ID3D12CommandList* cmdLists[] = {mCommandList.Get()};
-    mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+    std::array<ID3D12CommandList*, 1> cmdLists{mCommandList.Get()};
+    mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdLists.size()), cmdLists.data());
 
     ThrowIfFailed(mSwapChain->Present(0, 0));
     mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
@@ -298,14 +298,14 @@ void BoxApp::BuildConstantBuffers()
 
 void BoxApp::BuildRootSignature()
 {
-    CD3DX12_ROOT_PARAMETER slotRootParameter[1]{};
+    std::array<CD3DX12_ROOT_PARAMETER, 1> slotRootParameter{};
 
     CD3DX12_DESCRIPTOR_RANGE cbvTable{};
     cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
     slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
 
     CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1,
-                                            slotRootParameter,
+                                            slotRootParameter.data(),
                                             0,
                                             nullptr,
                                             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);

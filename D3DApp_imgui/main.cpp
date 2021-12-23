@@ -157,7 +157,7 @@ bool BoxApp::Initialize()
 
     ThrowIfFailed(mCommandList->Close());
     const std::array<ID3D12CommandList*, 1> cmdLists{mCommandList.Get()};
-    mCommandQueue->ExecuteCommandLists(cmdLists.size(), cmdLists.data());
+    mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdLists.size()), cmdLists.data());
 
     FlushCommandQueue();
 
@@ -221,7 +221,7 @@ void BoxApp::Draw(const Timer& gt)
     mCommandList->OMSetRenderTargets(1, &currBackBuffer, TRUE, &currDepthStencil);
 
     const std::array<ID3D12DescriptorHeap*, 1> descriptorHeaps{mCbvHeap.Get()};
-    mCommandList->SetDescriptorHeaps(descriptorHeaps.size(), descriptorHeaps.data());
+    mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
     auto ibv = mBoxGeo->IndexBufferView();
@@ -281,7 +281,7 @@ void BoxApp::Draw(const Timer& gt)
     ThrowIfFailed(mCommandList->Close());
 
     std::array<ID3D12CommandList*, 1> cmdLists{mCommandList.Get()};
-    mCommandQueue->ExecuteCommandLists(cmdLists.size(), cmdLists.data());
+    mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdLists.size()), cmdLists.data());
 
     ThrowIfFailed(mSwapChain->Present(0, 0));
     mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;

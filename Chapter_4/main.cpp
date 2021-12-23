@@ -101,8 +101,8 @@ void InitDirect3DApp::Draw(const Timer& t)
 
     ThrowIfFailed(mCommandList->Close());
 
-    ID3D12CommandList* cmdsList[] = {mCommandList.Get()};
-    mCommandQueue->ExecuteCommandLists(_countof(cmdsList), cmdsList);
+    std::array<ID3D12CommandList*, 1> cmdsList{mCommandList.Get()};
+    mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdsList.size()), cmdsList.data());
 
     ThrowIfFailed(mSwapChain->Present(0, 0));
     mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
