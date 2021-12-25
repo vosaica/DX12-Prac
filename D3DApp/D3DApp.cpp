@@ -1,16 +1,9 @@
-#ifndef UNICODE
-#define UNICODE
-#endif
-
-#ifndef _UNICODE
-#define _UNICODE
-#endif
-
 #include "D3DApp.h"
 
 #include "directx/d3dx12.h"
 
 #include <cassert>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -26,7 +19,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return D3DApp::GetApp()->MsgProc(hwnd, msg, wParam, lParam);
 }
 
-D3DApp* D3DApp::mApp = nullptr;
+D3DApp* D3DApp::mApp{nullptr};
+
 D3DApp* D3DApp::GetApp()
 {
     return mApp;
@@ -43,7 +37,14 @@ D3DApp::~D3DApp()
 {
     if (md3dDevice != nullptr)
     {
-        FlushCommandQueue();
+        try
+        {
+            FlushCommandQueue();
+        }
+        catch (...)
+        {
+            std::abort();
+        }
     }
 }
 
@@ -79,7 +80,7 @@ void D3DApp::Set4xMsaaState(bool value)
     }
 }
 
-int D3DApp::Run()
+WPARAM D3DApp::Run()
 {
     MSG msg = {nullptr};
 
@@ -111,7 +112,7 @@ int D3DApp::Run()
         }
     }
 
-    return (int)msg.wParam;
+    return msg.wParam;
 }
 
 bool D3DApp::Initialize()
@@ -177,7 +178,7 @@ void D3DApp::OnResize()
     mCurrBackBuffer = 0;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(mRtvHeap->GetCPUDescriptorHandleForHeapStart());
-    for (UINT i = 0; i < SwapChainBufferCount; i++)
+    for (UINT i = 0; i < SwapChainBufferCount; ++i)
     {
         ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainBuffer[i])));
         md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
@@ -225,10 +226,10 @@ void D3DApp::OnResize()
     dsvDesc.Texture2D.MipSlice = 0;
     md3dDevice->CreateDepthStencilView(mDepthStencilBuffer.Get(), &dsvDesc, DepthStencilView());
 
-    CD3DX12_RESOURCE_BARRIER barrierPreRtv
-        = CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilBuffer.Get(),
-                                               D3D12_RESOURCE_STATE_COMMON,
-                                               D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    CD3DX12_RESOURCE_BARRIER barrierPreRtv{
+        CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilBuffer.Get(),
+                                             D3D12_RESOURCE_STATE_COMMON,
+                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)};
     // Transition the resource from its initial state to be used as a depth buffer.
     mCommandList->ResourceBarrier(1, &barrierPreRtv);
 
@@ -409,10 +410,10 @@ bool D3DApp::InitMainWindow()
     }
 
     // Compute window rectangle dimensions based on requested client area dimensions.
-    RECT R = {0, 0, mClientWidth, mClientHeight};
+    RECT R{0, 0, mClientWidth, mClientHeight};
     AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, FALSE);
-    int width = R.right - R.left;
-    int height = R.bottom - R.top;
+    int width{R.right - R.left};
+    int height{R.bottom - R.top};
 
     mhMainWnd = CreateWindow(L"MainWnd",
                              mMainWndCaption.c_str(),
@@ -442,7 +443,7 @@ bool D3DApp::InitDirect3D()
 #ifndef NDEBUG
     // Enable the D3D12 debug layer.
     {
-        ComPtr<ID3D12Debug> debugController;
+        ComPtr<ID3D12Debug> debugController{};
         ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
         debugController->EnableDebugLayer();
     }
@@ -451,14 +452,14 @@ bool D3DApp::InitDirect3D()
     ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&mdxgiFactory)));
 
     // Try to create hardware device.
-    HRESULT hardwareResult = D3D12CreateDevice(nullptr, // default adapter
-                                               D3D_FEATURE_LEVEL_11_0,
-                                               IID_PPV_ARGS(&md3dDevice));
+    HRESULT hardwareResult{D3D12CreateDevice(nullptr, // default adapter
+                                             D3D_FEATURE_LEVEL_11_0,
+                                             IID_PPV_ARGS(&md3dDevice))};
 
     // Fallback to WARP device.
     if (FAILED(hardwareResult))
     {
-        ComPtr<IDXGIAdapter> pWarpAdapter;
+        ComPtr<IDXGIAdapter> pWarpAdapter{};
         ThrowIfFailed(mdxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&pWarpAdapter)));
 
         ThrowIfFailed(D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&md3dDevice)));
@@ -468,6 +469,8 @@ bool D3DApp::InitDirect3D()
 
     mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     mDsvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    mCbvSrvUavDescriptorSize
+        = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     // Check 4X MSAA quality support for our back buffer format.
     // All Direct3D 11 capable devices support 4X MSAA for all render
@@ -498,7 +501,7 @@ bool D3DApp::InitDirect3D()
 
 void D3DApp::CreateCommandObjects()
 {
-    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+    D3D12_COMMAND_QUEUE_DESC queueDesc{};
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     ThrowIfFailed(md3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCommandQueue)));
@@ -557,11 +560,11 @@ void D3DApp::FlushCommandQueue()
     // Wait until the GPU has completed commands up to this fence point.
     if (mFence->GetCompletedValue() < mCurrentFence)
     {
-        HANDLE eventHandle = CreateEventEx(nullptr, nullptr, FALSE, EVENT_ALL_ACCESS);
+        HANDLE eventHandle{CreateEventEx(nullptr, nullptr, FALSE, EVENT_ALL_ACCESS)};
         if (eventHandle == nullptr)
         {
-            std::string message = "Failed to create event: " + std::to_string(GetLastError());
-            throw std::runtime_error(message);
+            std::string message{"Failed to create event: " + std::to_string(GetLastError())};
+            throw std::runtime_error{message};
         }
 
         // Fire event when GPU hits current fence.
@@ -580,9 +583,9 @@ ID3D12Resource* D3DApp::CurrentBackBuffer() const
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::CurrentBackBufferView() const
 {
-    return CD3DX12_CPU_DESCRIPTOR_HANDLE(mRtvHeap->GetCPUDescriptorHandleForHeapStart(),
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE{mRtvHeap->GetCPUDescriptorHandleForHeapStart(),
                                          mCurrBackBuffer,
-                                         mRtvDescriptorSize);
+                                         mRtvDescriptorSize};
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::DepthStencilView() const
@@ -596,21 +599,21 @@ void D3DApp::CalculateFrameStats()
     // average time it takes to render one frame.  These stats
     // are appended to the window caption bar.
 
-    static int frameCnt = 0;
-    static float timeElapsed = 0.0F;
+    static int frameCnt{0};
+    static float timeElapsed{0.0F};
 
-    frameCnt++;
+    ++frameCnt;
 
     // Compute averages over one second period.
     if ((mTimer.TotalTime() - timeElapsed) >= 1.0F)
     {
-        auto fps = (float)frameCnt; // fps = frameCnt / 1
-        float mspf = 1000.0F / fps;
+        float fps{static_cast<float>(frameCnt)}; // fps = frameCnt / 1
+        float mspf{1000.0F / fps};
 
-        std::wstring fpsStr = std::to_wstring(fps);
-        std::wstring mspfStr = std::to_wstring(mspf);
+        std::wstring fpsStr{std::to_wstring(fps)};
+        std::wstring mspfStr{std::to_wstring(mspf)};
 
-        std::wstring windowText = mMainWndCaption + L"    fps: " + fpsStr + L"   mspf: " + mspfStr;
+        std::wstring windowText{mMainWndCaption + L"    fps: " + fpsStr + L"   mspf: " + mspfStr};
 
         SetWindowText(mhMainWnd, windowText.c_str());
 
@@ -622,15 +625,15 @@ void D3DApp::CalculateFrameStats()
 
 void D3DApp::LogAdapters()
 {
-    UINT i = 0;
-    ComPtr<IDXGIAdapter> adapter;
-    std::vector<ComPtr<IDXGIAdapter>> adapterList;
+    UINT i{0};
+    ComPtr<IDXGIAdapter> adapter{};
+    std::vector<ComPtr<IDXGIAdapter>> adapterList{};
     while (mdxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
     {
-        DXGI_ADAPTER_DESC desc;
+        DXGI_ADAPTER_DESC desc{};
         adapter->GetDesc(&desc);
 
-        std::wstring text = L"***Adapter: ";
+        std::wstring text{L"***Adapter: "};
         text += desc.Description;
         text += L"\n";
 
@@ -649,14 +652,14 @@ void D3DApp::LogAdapters()
 
 void D3DApp::LogAdapterOutputs(const ComPtr<IDXGIAdapter>& adapter)
 {
-    UINT i = 0;
-    ComPtr<IDXGIOutput> output;
+    UINT i{0};
+    ComPtr<IDXGIOutput> output{};
     while (adapter->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
     {
-        DXGI_OUTPUT_DESC desc;
+        DXGI_OUTPUT_DESC desc{};
         output->GetDesc(&desc);
 
-        std::wstring text = L"***Output: ";
+        std::wstring text{L"***Output: "};
         text += desc.DeviceName;
         text += L"\n";
         OutputDebugString(text.c_str());
@@ -669,22 +672,22 @@ void D3DApp::LogAdapterOutputs(const ComPtr<IDXGIAdapter>& adapter)
 
 void D3DApp::LogOutputDisplayModes(const ComPtr<IDXGIOutput>& output, DXGI_FORMAT format)
 {
-    UINT count = 0;
-    UINT flags = 0;
+    UINT count{0};
+    UINT flags{0};
 
     // Call with nullptr to get list count.
     output->GetDisplayModeList(format, flags, &count, nullptr);
 
-    std::vector<DXGI_MODE_DESC> modeList(count);
+    std::vector<DXGI_MODE_DESC> modeList{count};
     output->GetDisplayModeList(format, flags, &count, &modeList[0]);
 
     for (auto& x : modeList)
     {
-        UINT n = x.RefreshRate.Numerator;
-        UINT d = x.RefreshRate.Denominator;
-        std::wstring text = L"Width = " + std::to_wstring(x.Width) + L" " + L"Height = "
+        UINT n{x.RefreshRate.Numerator};
+        UINT d = {x.RefreshRate.Denominator};
+        std::wstring text{L"Width = " + std::to_wstring(x.Width) + L" " + L"Height = "
                           + std::to_wstring(x.Height) + L" " + L"Refresh = " + std::to_wstring(n) + L"/"
-                          + std::to_wstring(d) + L"\n";
+                          + std::to_wstring(d) + L"\n"};
 
         OutputDebugString(text.c_str());
     }
