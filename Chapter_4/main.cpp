@@ -34,14 +34,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
         InitDirect3DApp theAPP(hInstance);
         if (!theAPP.Initialize())
         {
-            return 0;
+            return 1;
         }
 
-        return theAPP.Run();
+        return static_cast<int>(theAPP.Run());
     }
     catch (com_exception& e)
     {
-        auto message = cstring2wstring(e.what());
+        auto message{cstring2wstring(e.what())};
         MessageBox(nullptr, message.c_str(), L"HR Failed", MB_OK);
 
         return 0;
@@ -74,9 +74,9 @@ void InitDirect3DApp::Draw(const Timer& t)
 
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-    auto barr = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-                                                     D3D12_RESOURCE_STATE_PRESENT,
-                                                     D3D12_RESOURCE_STATE_RENDER_TARGET);
+    auto barr{CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+                                                   D3D12_RESOURCE_STATE_PRESENT,
+                                                   D3D12_RESOURCE_STATE_RENDER_TARGET)};
     mCommandList->ResourceBarrier(1, &barr);
 
     mCommandList->RSSetViewports(1, &mScreenViewport);
@@ -90,8 +90,8 @@ void InitDirect3DApp::Draw(const Timer& t)
                                         0,
                                         nullptr);
 
-    auto currentBackBufferView = CurrentBackBufferView();
-    auto depthStencilView = DepthStencilView();
+    auto currentBackBufferView{CurrentBackBufferView()};
+    auto depthStencilView{DepthStencilView()};
     mCommandList->OMSetRenderTargets(1, &currentBackBufferView, TRUE, &depthStencilView);
 
     barr = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),

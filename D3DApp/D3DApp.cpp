@@ -82,7 +82,7 @@ void D3DApp::Set4xMsaaState(bool value)
 
 WPARAM D3DApp::Run()
 {
-    MSG msg = {nullptr};
+    MSG msg{nullptr};
 
     mTimer.Reset();
 
