@@ -31,7 +31,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 
     try
     {
-        InitDirect3DApp theAPP(hInstance);
+        InitDirect3DApp theAPP{hInstance};
         if (!theAPP.Initialize())
         {
             return 1;

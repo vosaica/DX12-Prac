@@ -1,7 +1,3 @@
-#ifndef WIN32
-#define WIN32
-#endif // !WIN32
-
 #include "D3DApp.h"
 #include "DirectXTK12/SimpleMath.h"
 
@@ -98,17 +94,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 
     try
     {
-        BoxApp theAPP(hInstance);
+        BoxApp theAPP{hInstance};
         if (!theAPP.Initialize())
         {
             return 0;
         }
 
-        return theAPP.Run();
+        return static_cast<int>(theAPP.Run());
     }
     catch (com_exception& e)
     {
-        auto message = cstring2wstring(e.what());
+        auto message{cstring2wstring(e.what())};
         MessageBox(nullptr, message.c_str(), L"HR Failed", MB_OK);
 
         return 0;
@@ -151,26 +147,26 @@ void BoxApp::OnResize()
 {
     D3DApp::OnResize();
 
-    XMMATRIX proj = XMMatrixPerspectiveFovLH(0.25F * XM_PI, AspectRatio(), 1.0F, 1000.0F);
+    XMMATRIX proj{XMMatrixPerspectiveFovLH(0.25F * XM_PI, AspectRatio(), 1.0F, 1000.0F)};
     XMStoreFloat4x4(&mProj, proj);
 }
 
 void BoxApp::Update(const Timer& gt)
 {
-    float x = mRadius * sinf(mPhi) * cosf(mTheta);
-    float z = mRadius * sinf(mPhi) * sinf(mTheta);
-    float y = mRadius * cosf(mPhi);
+    float x{mRadius * sinf(mPhi) * cosf(mTheta)};
+    float z{mRadius * sinf(mPhi) * sinf(mTheta)};
+    float y{mRadius * cosf(mPhi)};
 
-    XMVECTOR pos = XMVectorSet(x, y, z, 1.0F);
-    XMVECTOR target = XMVectorZero();
-    XMVECTOR up = XMVectorSet(0.0F, 1.0F, 0.0F, 0.0F);
+    XMVECTOR pos{XMVectorSet(x, y, z, 1.0F)};
+    XMVECTOR target{XMVectorZero()};
+    XMVECTOR up{XMVectorSet(0.0F, 1.0F, 0.0F, 0.0F)};
 
-    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+    XMMATRIX view{XMMatrixLookAtLH(pos, target, up)};
     XMStoreFloat4x4(&mView, view);
 
-    XMMATRIX world = XMLoadFloat4x4(&mWorld);
-    XMMATRIX proj = XMLoadFloat4x4(&mProj);
-    XMMATRIX worldView = world * view * proj;
+    XMMATRIX world{XMLoadFloat4x4(&mWorld)};
+    XMMATRIX proj{XMLoadFloat4x4(&mProj)};
+    XMMATRIX worldView{world * view * proj};
 
     ObjectConstants objConstants;
     XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldView));
@@ -199,15 +195,15 @@ void BoxApp::Draw(const Timer& gt)
                                         0,
                                         nullptr);
 
-    auto currBackBuffer = CurrentBackBufferView();
-    auto currDepthStencil = DepthStencilView();
+    auto currBackBuffer{CurrentBackBufferView()};
+    auto currDepthStencil{DepthStencilView()};
     mCommandList->OMSetRenderTargets(1, &currBackBuffer, TRUE, &currDepthStencil);
 
     std::array<ID3D12DescriptorHeap*, 1> descriptorHeaps{mCbvHeap.Get()};
     mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-    auto ibv = mBoxGeo->IndexBufferView();
+    auto ibv{mBoxGeo->IndexBufferView()};
     mCommandList->IASetVertexBuffers(0, 2, mBoxGeo->GetVertexBufferView());
     mCommandList->IASetIndexBuffer(&ibv);
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -248,8 +244,8 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
     if ((btnState & MK_LBUTTON) != 0)
     {
-        float dx = XMConvertToRadians(0.25F * static_cast<float>(x - mLastMousePos.x));
-        float dy = XMConvertToRadians(0.25F * static_cast<float>(y - mLastMousePos.y));
+        float dx{XMConvertToRadians(0.25F * static_cast<float>(x - mLastMousePos.x))};
+        float dy{XMConvertToRadians(0.25F * static_cast<float>(y - mLastMousePos.y))};
 
         mTheta += dx;
         mPhi += dy;
@@ -258,8 +254,8 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
     }
     else if ((btnState & MK_RBUTTON) != 0)
     {
-        float dx = 0.05F * static_cast<float>(x - mLastMousePos.x);
-        float dy = 0.05F * static_cast<float>(y - mLastMousePos.y);
+        float dx{0.05F * static_cast<float>(x - mLastMousePos.x)};
+        float dy{0.05F * static_cast<float>(y - mLastMousePos.y)};
 
         mRadius += dx - dy;
 
@@ -283,11 +279,11 @@ void BoxApp::BuildConstantBuffers()
 {
     mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
 
-    UINT objCBByteSize = CalcConstantBufferByteSize(sizeof(ObjectConstants));
+    UINT objCBByteSize{CalcConstantBufferByteSize(sizeof(ObjectConstants))};
 
-    D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+    D3D12_GPU_VIRTUAL_ADDRESS cbAddress{mObjectCB->Resource()->GetGPUVirtualAddress()};
 
-    int boxCBufIndex = 0;
+    int boxCBufIndex{0};
     cbAddress += boxCBufIndex * static_cast<unsigned long long>(objCBByteSize);
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
     cbvDesc.BufferLocation = cbAddress;
@@ -310,12 +306,12 @@ void BoxApp::BuildRootSignature()
                                             nullptr,
                                             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-    ComPtr<ID3DBlob> serializedRootSig = nullptr;
-    ComPtr<ID3DBlob> errorBlob = nullptr;
-    HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc,
-                                             D3D_ROOT_SIGNATURE_VERSION_1,
-                                             serializedRootSig.GetAddressOf(),
-                                             errorBlob.GetAddressOf());
+    ComPtr<ID3DBlob> serializedRootSig{};
+    ComPtr<ID3DBlob> errorBlob{};
+    HRESULT hr{D3D12SerializeRootSignature(&rootSigDesc,
+                                           D3D_ROOT_SIGNATURE_VERSION_1,
+                                           serializedRootSig.GetAddressOf(),
+                                           errorBlob.GetAddressOf())};
     if (errorBlob != nullptr)
     {
         OutputDebugStringA((char*)errorBlob->GetBufferPointer());
@@ -341,50 +337,50 @@ void BoxApp::BuildShadersAndInputLayout()
 
 void BoxApp::BuildBoxGeometry()
 {
-    std::array<VPosData, 8> verticesPos = {VPosData{XMFLOAT3(-1.0F, -1.0F, -1.0F)},
-                                           VPosData{XMFLOAT3(-1.0F, +1.0F, -1.0F)},
-                                           VPosData{XMFLOAT3(+1.0F, +1.0F, -1.0F)},
-                                           VPosData{XMFLOAT3(+1.0F, -1.0F, -1.0F)},
-                                           VPosData{XMFLOAT3(-1.0F, -1.0F, +1.0F)},
-                                           VPosData{XMFLOAT3(-1.0F, +1.0F, +1.0F)},
-                                           VPosData{XMFLOAT3(+1.0F, +1.0F, +1.0F)},
-                                           VPosData{XMFLOAT3(+1.0F, -1.0F, +1.0F)}};
-    std::array<VColorData, 8> verticesColor = {VColorData{XMFLOAT4(Colors::White)},
-                                               VColorData{XMFLOAT4(Colors::Black)},
-                                               VColorData{XMFLOAT4(Colors::Red)},
-                                               VColorData{XMFLOAT4(Colors::Green)},
-                                               VColorData{XMFLOAT4(Colors::Blue)},
-                                               VColorData{XMFLOAT4(Colors::Yellow)},
-                                               VColorData{XMFLOAT4(Colors::Cyan)},
-                                               VColorData{XMFLOAT4(Colors::Magenta)}};
+    std::array<VPosData, 8> verticesPos{VPosData{XMFLOAT3(-1.0F, -1.0F, -1.0F)},
+                                        VPosData{XMFLOAT3(-1.0F, +1.0F, -1.0F)},
+                                        VPosData{XMFLOAT3(+1.0F, +1.0F, -1.0F)},
+                                        VPosData{XMFLOAT3(+1.0F, -1.0F, -1.0F)},
+                                        VPosData{XMFLOAT3(-1.0F, -1.0F, +1.0F)},
+                                        VPosData{XMFLOAT3(-1.0F, +1.0F, +1.0F)},
+                                        VPosData{XMFLOAT3(+1.0F, +1.0F, +1.0F)},
+                                        VPosData{XMFLOAT3(+1.0F, -1.0F, +1.0F)}};
+    std::array<VColorData, 8> verticesColor{VColorData{XMFLOAT4(Colors::White)},
+                                            VColorData{XMFLOAT4(Colors::Black)},
+                                            VColorData{XMFLOAT4(Colors::Red)},
+                                            VColorData{XMFLOAT4(Colors::Green)},
+                                            VColorData{XMFLOAT4(Colors::Blue)},
+                                            VColorData{XMFLOAT4(Colors::Yellow)},
+                                            VColorData{XMFLOAT4(Colors::Cyan)},
+                                            VColorData{XMFLOAT4(Colors::Magenta)}};
     // clang-format off
-    std::array<std::uint16_t, 36> indices = {// front
-                                             0, 1, 2,
-                                             0, 2, 3,
+    std::array<std::uint16_t, 36> indices{// front
+                                          0, 1, 2,
+                                          0, 2, 3,
 
-                                             // back
-                                             4, 6, 5,
-                                             4, 7, 6,
+                                          // back
+                                          4, 6, 5,
+                                          4, 7, 6,
 
-                                             // left
-                                             4, 5, 1,
-                                             4, 1, 0,
+                                          // left
+                                          4, 5, 1,
+                                          4, 1, 0,
 
-                                             // right
-                                             3, 2, 6,
-                                             3, 6, 7,
+                                          // right
+                                          3, 2, 6,
+                                          3, 6, 7,
 
-                                             // top
-                                             1, 5, 6,
-                                             1, 6, 2,
+                                          // top
+                                          1, 5, 6,
+                                          1, 6, 2,
 
-                                             // bottom
-                                             4, 0, 3,
-                                             4, 3, 7};
+                                          // bottom
+                                          4, 0, 3,
+                                          4, 3, 7};
     // clang-format on
-    const UINT vpbByteSize = (UINT)verticesPos.size() * sizeof(VPosData);
-    const UINT vcbByteSize = (UINT)verticesColor.size() * sizeof(VColorData);
-    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+    const UINT vpbByteSize{(UINT)verticesPos.size() * sizeof(VPosData)};
+    const UINT vcbByteSize{(UINT)verticesColor.size() * sizeof(VColorData)};
+    const UINT ibByteSize{(UINT)indices.size() * sizeof(std::uint16_t)};
 
     mBoxGeo = std::make_unique<MeshGeometry<2>>();
     mBoxGeo->Name = "boxGeo";
@@ -421,7 +417,7 @@ void BoxApp::BuildBoxGeometry()
     mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
     mBoxGeo->IndexBufferByteSize = ibByteSize;
 
-    SubmeshGeometry submesh;
+    SubmeshGeometry submesh{};
     submesh.IndexCount = (UINT)indices.size();
     submesh.StartIndexLocation = 0;
     submesh.BaseVertexLocation = 0;
@@ -431,7 +427,7 @@ void BoxApp::BuildBoxGeometry()
 
 void BoxApp::BuildPSO()
 {
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
     ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
     psoDesc.InputLayout = {mInputLayout.data(), (UINT)mInputLayout.size()};
     psoDesc.pRootSignature = mRootSignature.Get();
