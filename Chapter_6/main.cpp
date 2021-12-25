@@ -50,8 +50,8 @@ private:
     void OnMouseUp(WPARAM btnState, int x, int y) override;
     void OnMouseMove(WPARAM btnState, int x, int y) override;
 
-    void BuildDescriptorHeaps();
-    void BuildConstantBuffers();
+    void BuildCbvDescriptorHeap();
+    void BuildConstantBufferViews();
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
     void BuildBoxGeometry();
@@ -127,8 +127,8 @@ bool BoxApp::Initialize()
 
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-    BuildDescriptorHeaps();
-    BuildConstantBuffers();
+    BuildCbvDescriptorHeap();
+    BuildConstantBufferViews();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
@@ -204,7 +204,7 @@ void BoxApp::Draw(const Timer& gt)
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
     auto ibv{mBoxGeo->IndexBufferView()};
-    mCommandList->IASetVertexBuffers(0, 2, mBoxGeo->GetVertexBufferView());
+    mCommandList->IASetVertexBuffers(0, 2, mBoxGeo->VertexBufferView());
     mCommandList->IASetIndexBuffer(&ibv);
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -265,7 +265,7 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
     mLastMousePos.y = y;
 }
 
-void BoxApp::BuildDescriptorHeaps()
+void BoxApp::BuildCbvDescriptorHeap()
 {
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc{};
     cbvHeapDesc.NumDescriptors = 1;
@@ -275,7 +275,7 @@ void BoxApp::BuildDescriptorHeaps()
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
 }
 
-void BoxApp::BuildConstantBuffers()
+void BoxApp::BuildConstantBufferViews()
 {
     mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
 
