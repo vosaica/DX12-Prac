@@ -9,9 +9,7 @@ end
 set_toolchains("msvc")
 set_languages("c++17", "c17")
 
-add_defines("WIN32")
-add_defines("UNICODE")
-add_defines("_UNICODE")
+add_defines("WIN32", "UNICODE", "_UNICODE")
 
 add_vectorexts("avx2")
 set_fpmodels("fast")
