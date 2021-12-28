@@ -42,7 +42,7 @@ namespace DirectX
 class com_exception : public std::exception
 {
 public:
-    com_exception(HRESULT hr) noexcept : result(hr)
+    com_exception(HRESULT hr) noexcept : result{hr}
     {
     }
 
@@ -123,19 +123,6 @@ inline HANDLE safe_handle(HANDLE h) noexcept
 
 namespace D3DUtils
 {
-Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
-    ID3D12Device* device,
-    ID3D12GraphicsCommandList* cmdList,
-    const void* initData,
-    UINT64 byteSize,
-    Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
-
-Microsoft::WRL::ComPtr<ID3DBlob> LoadShaderBinary(const std::wstring& filename);
-Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(const std::wstring& filename,
-                                               const D3D_SHADER_MACRO* defines,
-                                               const std::string& entrypoint,
-                                               const std::string& target);
-
 inline std::wstring cstring2wstring(const char* str)
 {
     size_t newsize = strlen(str) + 1;
@@ -148,6 +135,20 @@ inline std::wstring cstring2wstring(const char* str)
 }
 
 // Below are added Helpers from the d3dUtils.h
+Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
+    ID3D12Device* device,
+    ID3D12GraphicsCommandList* cmdList,
+    const void* initData,
+    UINT64 byteSize,
+    Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
+
+Microsoft::WRL::ComPtr<ID3DBlob> LoadShaderBinary(const std::wstring& filename);
+
+Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(const std::wstring& filename,
+                                               const D3D_SHADER_MACRO* defines,
+                                               const std::string& entrypoint,
+                                               const std::string& target);
+
 inline UINT CalcConstantBufferByteSize(UINT byteSize)
 {
     return (byteSize + 255) & ~255;
@@ -185,7 +186,7 @@ struct MeshGeometry
 
     std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 
-    [[nodiscard]] D3D12_VERTEX_BUFFER_VIEW* GetVertexBufferView()
+    [[nodiscard]] D3D12_VERTEX_BUFFER_VIEW* VertexBufferView()
     {
         for (size_t i = 0; i < N; ++i)
         {
@@ -221,10 +222,8 @@ class UploadBuffer
 {
 public:
     UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) :
-        mIsConstantBuffer(isConstantBuffer)
+        mIsConstantBuffer{isConstantBuffer}, mElementByteSize{sizeof(T)}
     {
-        mElementByteSize = sizeof(T);
-
         // Constant buffer elements need to be multiples of 256 bytes.
         // This is because the hardware can only view constant data
         // at m*256 byte offsets and of n*256 byte lengths.
@@ -275,18 +274,20 @@ public:
     }
 
 private:
-    Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer;
-    BYTE* mMappedData = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer{};
+    BYTE* mMappedData{nullptr};
 
-    UINT mElementByteSize = 0;
-    bool mIsConstantBuffer = false;
+    UINT mElementByteSize{0};
+    bool mIsConstantBuffer{false};
 };
 
 template <typename ObjectConstants, typename PassConstants>
 struct FrameResource
 {
 public:
-    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount)
+    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount) :
+        PassCB{std::make_unique<UploadBuffer<PassConstants>>(device, passCount, true)},
+        ObjectCB{std::make_unique<UploadBuffer<ObjectConstants>>(device, objectCount, true)}
     {
         DirectX::ThrowIfFailed(
             device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&CmdListAlloc)));
@@ -300,7 +301,7 @@ public:
     std::unique_ptr<UploadBuffer<PassConstants>> PassCB{};
     std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB{};
 
-    UINT64 Fence = 0;
+    UINT64 Fence{0};
 };
 } // namespace D3DUtils
 
