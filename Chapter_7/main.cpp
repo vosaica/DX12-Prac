@@ -436,7 +436,7 @@ void ShapesApp::BuildConstantBufferViews()
 
         for (UINT i{0}; i < objCount; ++i)
         {
-            D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
+            D3D12_GPU_VIRTUAL_ADDRESS cbAddress{objectCB->GetGPUVirtualAddress()};
             cbAddress += static_cast<unsigned long long>(i) * objCBByteSize;
 
             UINT heapIndex{frameIndex * objCount + i};
@@ -585,8 +585,8 @@ void ShapesApp::BuildShapeGeometry()
     // vertices of all the meshes into one vertex buffer.
     //
 
-    auto totalVertexCount
-        = box.Vertices.size() + grid.Vertices.size() + sphere.Vertices.size() + cylinder.Vertices.size();
+    auto totalVertexCount{box.Vertices.size() + grid.Vertices.size() + sphere.Vertices.size()
+                          + cylinder.Vertices.size()};
 
     std::vector<Vertex> vertices{totalVertexCount};
 
