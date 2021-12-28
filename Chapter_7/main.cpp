@@ -2,8 +2,6 @@
 #include "../Shared/PlatformHelpers.h"
 #include "D3DApp.h"
 #include "DirectXTK12/SimpleMath.h"
-#include "d3d12.h"
-#include "d3dcommon.h"
 #include "directx/d3dx12.h"
 
 #include <DirectXColors.h>
@@ -15,7 +13,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <vcruntime.h>
 #include <vector>
 
 using namespace DirectX;
@@ -64,10 +61,10 @@ class ShapesApp : public D3DApp
         XMFLOAT4X4 World{Matrix::Identity};
 
         int NumFramesDirty{gNumFrameResources};
-        UINT ObjCBIndex = -1;
-        MeshGeometry* Geo = nullptr;
+        UINT ObjCBIndex{0xffffffff};
+        MeshGeometry* Geo{nullptr};
 
-        D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        D3D12_PRIMITIVE_TOPOLOGY PrimitiveType{D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST};
 
         UINT IndexCount{0};
         UINT StartIndexLocation{0};
@@ -93,25 +90,23 @@ private:
 
     void UpdateObjectCBs(const Timer& gt);
     void UpdateMainPassCB(const Timer& gt);
+    void OnKeyboardInput(const Timer& gt);
+    void UpdateCamera(const Timer& gt);
 
     void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
 
     void CreateCbvDescriptorHeaps();
-    void BuildConstantBuffers();
+    void BuildConstantBufferViews();
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
     void BuildShapeGeometry();
     void BuildRenderItems();
-    void BuildPSO();
+    void BuildPSOs();
     void BuildFrameResources();
 
     // Fields
     ComPtr<ID3D12RootSignature> mRootSignature{};
     ComPtr<ID3D12DescriptorHeap> mCbvHeap{};
-    ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap{};
-    UINT mCbvSrvUavDescriptorSize;
-
-    std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB{};
 
     std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries{};
     std::unordered_map<std::string, ComPtr<ID3DBlob>> mShaders{};
@@ -129,16 +124,12 @@ private:
     std::vector<RenderItem*> mOpaqueRitems{};
     std::vector<RenderItem*> mTransparentRitems{};
 
-    ComPtr<ID3DBlob> mvsByteCode{};
-    ComPtr<ID3DBlob> mpsByteCode{};
-
     bool mIsWireframe{false};
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout{};
 
     ComPtr<ID3D12PipelineState> mPSO{};
 
-    XMFLOAT4X4 mWorld{SimpleMath::Matrix::Identity};
     XMFLOAT4X4 mProj{SimpleMath::Matrix::Identity};
     XMFLOAT4X4 mView{SimpleMath::Matrix::Identity};
     XMFLOAT3 mEyePos{};
@@ -164,23 +155,23 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
         ShapesApp theAPP(hInstance);
         if (!theAPP.Initialize())
         {
-            return 0;
+            return 1;
         }
 
-        return theAPP.Run();
+        return static_cast<int>(theAPP.Run());
     }
     catch (com_exception& e)
     {
         auto message = cstring2wstring(e.what());
         MessageBox(nullptr, message.c_str(), L"HR Failed", MB_OK);
 
-        return 0;
+        return 1;
     }
 }
 
 ShapesApp::ShapesApp(HINSTANCE hInstance) : D3DApp(hInstance)
 {
-    mMainWndCaption = L"Box App";
+    mMainWndCaption = L"Shapes App";
 }
 
 ShapesApp::~ShapesApp() = default;
@@ -194,13 +185,14 @@ bool ShapesApp::Initialize()
 
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-    CreateCbvDescriptorHeaps();
-    BuildConstantBuffers();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildShapeGeometry();
-    BuildPSO();
+    BuildRenderItems();
     BuildFrameResources();
+    CreateCbvDescriptorHeaps();
+    BuildConstantBufferViews();
+    BuildPSOs();
 
     ThrowIfFailed(mCommandList->Close());
     std::array<ID3D12CommandList*, 1> cmdLists{mCommandList.Get()};
@@ -221,6 +213,9 @@ void ShapesApp::OnResize()
 
 void ShapesApp::Update(const Timer& gt)
 {
+    OnKeyboardInput(gt);
+    UpdateCamera(gt);
+
     mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
     mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
 
@@ -236,24 +231,9 @@ void ShapesApp::Update(const Timer& gt)
         WaitForSingleObject(eventHandle, INFINITE);
         CloseHandle(eventHandle);
     }
-    float x = mRadius * sinf(mPhi) * cosf(mTheta);
-    float z = mRadius * sinf(mPhi) * sinf(mTheta);
-    float y = mRadius * cosf(mPhi);
 
-    XMVECTOR pos = XMVectorSet(x, y, z, 1.0F);
-    XMVECTOR target = XMVectorZero();
-    XMVECTOR up = XMVectorSet(0.0F, 1.0F, 0.0F, 0.0F);
-
-    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-    XMStoreFloat4x4(&mView, view);
-
-    XMMATRIX world = XMLoadFloat4x4(&mWorld);
-    XMMATRIX proj = XMLoadFloat4x4(&mProj);
-    XMMATRIX worldView = world * view * proj;
-
-    ObjectConstants objConstants;
-    XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(worldView));
-    mFrameResources[mCurrFrameResourceIndex]->ObjectCB->CopyData(0, objConstants);
+    UpdateObjectCBs(gt);
+    UpdateMainPassCB(gt);
 }
 
 void ShapesApp::Draw(const Timer& gt)
@@ -267,7 +247,7 @@ void ShapesApp::Draw(const Timer& gt)
     }
     else
     {
-        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSO.Get()));
+        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
     }
 
     mCommandList->RSSetViewports(1, &mScreenViewport);
@@ -295,9 +275,9 @@ void ShapesApp::Draw(const Timer& gt)
 
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-    int passCbvIndex = mPassCbvOffset + mCurrFrameResourceIndex;
+    auto passCbvIndex = mPassCbvOffset + mCurrFrameResourceIndex;
     auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    passCbvHandle.Offset(passCbvIndex, mCbvSrvUavDescriptorSize);
+    passCbvHandle.Offset(static_cast<INT>(passCbvIndex), mCbvSrvUavDescriptorSize);
     mCommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
 
     DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
@@ -340,16 +320,16 @@ void ShapesApp::UpdateObjectCBs(const Timer& gt)
 
 void ShapesApp::UpdateMainPassCB(const Timer& gt)
 {
-    XMMATRIX view = XMLoadFloat4x4(&mView);
-    XMMATRIX proj = XMLoadFloat4x4(&mProj);
-    XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+    XMMATRIX view{XMLoadFloat4x4(&mView)};
+    XMMATRIX proj{XMLoadFloat4x4(&mProj)};
+    XMMATRIX viewProj{XMMatrixMultiply(view, proj)};
 
-    auto viewDet = XMMatrixDeterminant(view);
-    auto projDet = XMMatrixDeterminant(proj);
-    auto vpDet = XMMatrixDeterminant(viewProj);
-    XMMATRIX invView = XMMatrixInverse(&viewDet, view);
-    XMMATRIX invProj = XMMatrixInverse(&projDet, proj);
-    XMMATRIX invViewProj = XMMatrixInverse(&vpDet, viewProj);
+    auto viewDet{XMMatrixDeterminant(view)};
+    auto projDet{XMMatrixDeterminant(proj)};
+    auto vpDet{XMMatrixDeterminant(viewProj)};
+    XMMATRIX invView{XMMatrixInverse(&viewDet, view)};
+    XMMATRIX invProj{XMMatrixInverse(&projDet, proj)};
+    XMMATRIX invViewProj{XMMatrixInverse(&vpDet, viewProj)};
 
     XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(view));
     XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
@@ -368,11 +348,32 @@ void ShapesApp::UpdateMainPassCB(const Timer& gt)
     mMainPassCB.DeltaTime = static_cast<float>(gt.DeltaTime());
 }
 
+void ShapesApp::OnKeyboardInput(const Timer& gt)
+{
+    mIsWireframe = (GetAsyncKeyState('1') & 0x8000) != 0;
+}
+
+void ShapesApp::UpdateCamera(const Timer& gt)
+{
+    // Convert Spherical to Cartesian coordinates.
+    mEyePos.x = mRadius * sinf(mPhi) * cosf(mTheta);
+    mEyePos.z = mRadius * sinf(mPhi) * sinf(mTheta);
+    mEyePos.y = mRadius * cosf(mPhi);
+
+    // Build the view matrix.
+    XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0F);
+    XMVECTOR target = XMVectorZero();
+    XMVECTOR up = XMVectorSet(0.0F, 1.0F, 0.0F, 0.0F);
+
+    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+    XMStoreFloat4x4(&mView, view);
+}
+
 void ShapesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
 {
     for (auto* ri : ritems)
     {
-        cmdList->IASetVertexBuffers(0, 1, ri->Geo->GetVertexBufferView());
+        cmdList->IASetVertexBuffers(0, 1, ri->Geo->VertexBufferView());
         auto ibv = ri->Geo->IndexBufferView();
         cmdList->IASetIndexBuffer(&ibv);
         cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
@@ -424,36 +425,18 @@ void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
     mLastMousePos.y = y;
 }
 
-void ShapesApp::CreateCbvDescriptorHeaps()
-{
-    mCbvSrvUavDescriptorSize
-        = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    auto objCount = static_cast<UINT>(mAllRitems.size());
-    UINT numDesciptor = (objCount + 1) * gNumFrameResources;
-
-    mPassCbvOffset = objCount * gNumFrameResources;
-
-    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc{};
-    cbvHeapDesc.NumDescriptors = numDesciptor;
-    cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    cbvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
-}
-
-void ShapesApp::BuildConstantBuffers()
+void ShapesApp::BuildConstantBufferViews()
 {
     UINT objCBByteSize = CalcConstantBufferByteSize(sizeof(ObjectConstants));
-    UINT objCount = static_cast<UINT>(mAllRitems.size());
+    UINT objCount = static_cast<UINT>(mOpaqueRitems.size());
 
-    for (int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
+    for (UINT frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
     {
-        auto objectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), objCount, true);
+        auto* objectCB = mFrameResources[frameIndex]->ObjectCB->Resource();
 
         for (UINT i = 0; i < objCount; ++i)
         {
-            D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->Resource()->GetGPUVirtualAddress();
+            D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
             cbAddress += static_cast<unsigned long long>(i) * objCBByteSize;
 
             UINT heapIndex = frameIndex * objCount + i;
@@ -470,15 +453,15 @@ void ShapesApp::BuildConstantBuffers()
 
     UINT passCBByteSize = CalcConstantBufferByteSize(sizeof(PassConstants));
 
-    for (int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
+    for (UINT frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
     {
         auto* passCB = mFrameResources[frameIndex]->PassCB->Resource();
 
         D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
 
-        int heapIndex = mPassCbvOffset + frameIndex;
+        auto heapIndex = mPassCbvOffset + frameIndex;
         auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-        handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
+        handle.Offset(static_cast<INT>(heapIndex), mCbvSrvUavDescriptorSize);
 
         D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
         cbvDesc.BufferLocation = cbAddress;
@@ -488,14 +471,29 @@ void ShapesApp::BuildConstantBuffers()
     }
 }
 
+void ShapesApp::CreateCbvDescriptorHeaps()
+{
+    auto objCount{static_cast<UINT>(mAllRitems.size())};
+    UINT numDesciptor{(objCount + 1) * gNumFrameResources};
+
+    mPassCbvOffset = objCount * gNumFrameResources;
+
+    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc{};
+    cbvHeapDesc.NumDescriptors = numDesciptor;
+    cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    cbvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
+}
+
 void ShapesApp::BuildRootSignature()
 {
-    std::array<CD3DX12_ROOT_PARAMETER, 2> slotRootParameter{};
-
     CD3DX12_DESCRIPTOR_RANGE cbvTable0{};
     cbvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
     CD3DX12_DESCRIPTOR_RANGE cbvTable1{};
     cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+
+    std::array<CD3DX12_ROOT_PARAMETER, 2> slotRootParameter{};
 
     slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable0);
     slotRootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
@@ -506,15 +504,15 @@ void ShapesApp::BuildRootSignature()
                                             nullptr,
                                             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-    ComPtr<ID3DBlob> serializedRootSig = nullptr;
-    ComPtr<ID3DBlob> errorBlob = nullptr;
-    HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc,
-                                             D3D_ROOT_SIGNATURE_VERSION_1,
-                                             serializedRootSig.GetAddressOf(),
-                                             errorBlob.GetAddressOf());
+    ComPtr<ID3DBlob> serializedRootSig{};
+    ComPtr<ID3DBlob> errorBlob{};
+    HRESULT hr{D3D12SerializeRootSignature(&rootSigDesc,
+                                           D3D_ROOT_SIGNATURE_VERSION_1,
+                                           serializedRootSig.GetAddressOf(),
+                                           errorBlob.GetAddressOf())};
     if (errorBlob != nullptr)
     {
-        OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+        ::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
     }
     ThrowIfFailed(hr);
 
@@ -526,21 +524,21 @@ void ShapesApp::BuildRootSignature()
 
 void ShapesApp::BuildShadersAndInputLayout()
 {
-    mvsByteCode = CompileShader(L"Shaders/Chapter_7.hlsl", nullptr, "VS", "vs_5_0");
-    mpsByteCode = CompileShader(L"Shaders/Chapter_7.hlsl", nullptr, "PS", "ps_5_0");
+    mShaders["standardVS"] = CompileShader(L"Shaders\\Chapter_7.hlsl", nullptr, "VS", "vs_5_1");
+    mShaders["opaquePS"] = CompileShader(L"Shaders\\Chapter_7.hlsl", nullptr, "PS", "ps_5_1");
 
     mInputLayout = {
-        {"POSITION", 0,    DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        {   "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+        {"POSITION", 0,    DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        {   "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
     };
 }
 
 void ShapesApp::BuildShapeGeometry()
 {
-    GeometryGenerator::MeshData box = GeometryGenerator::CreateBox(1.5F, 0.5F, 1.5F, 3);
-    GeometryGenerator::MeshData grid = GeometryGenerator::CreateGrid(20.0F, 30.0F, 60, 40);
-    GeometryGenerator::MeshData sphere = GeometryGenerator::CreateSphere(0.5F, 20, 20);
-    GeometryGenerator::MeshData cylinder = GeometryGenerator::CreateCylinder(0.5F, 0.3F, 3.0F, 20, 20);
+    GeometryGenerator::MeshData box{GeometryGenerator::CreateBox(1.5F, 0.5F, 1.5F, 3)};
+    GeometryGenerator::MeshData grid{GeometryGenerator::CreateGrid(20.0F, 30.0F, 60, 40)};
+    GeometryGenerator::MeshData sphere{GeometryGenerator::CreateSphere(0.5F, 20, 20)};
+    GeometryGenerator::MeshData cylinder{GeometryGenerator::CreateCylinder(0.5F, 0.3F, 3.0F, 20, 20)};
 
     //
     // We are concatenating all the geometry into one big vertex/index buffer.  So
@@ -548,39 +546,39 @@ void ShapesApp::BuildShapeGeometry()
     //
 
     // Cache the vertex offsets to each object in the concatenated vertex buffer.
-    UINT boxVertexOffset = 0;
-    UINT gridVertexOffset = (UINT)box.Vertices.size();
-    UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
-    UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
+    UINT boxVertexOffset{0};
+    UINT gridVertexOffset{static_cast<UINT>(box.Vertices.size())};
+    UINT sphereVertexOffset{gridVertexOffset + static_cast<UINT>(grid.Vertices.size())};
+    UINT cylinderVertexOffset{sphereVertexOffset + static_cast<UINT>(sphere.Vertices.size())};
 
     // Cache the starting index for each object in the concatenated index buffer.
-    UINT boxIndexOffset = 0;
-    UINT gridIndexOffset = (UINT)box.Indices32.size();
-    UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
-    UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
+    UINT boxIndexOffset{0};
+    UINT gridIndexOffset{static_cast<UINT>(box.Indices32.size())};
+    UINT sphereIndexOffset{gridIndexOffset + static_cast<UINT>(grid.Indices32.size())};
+    UINT cylinderIndexOffset{sphereIndexOffset + static_cast<UINT>(sphere.Indices32.size())};
 
     // Define the SubmeshGeometry that cover different
     // regions of the vertex/index buffers.
 
     SubmeshGeometry boxSubmesh;
-    boxSubmesh.IndexCount = (UINT)box.Indices32.size();
+    boxSubmesh.IndexCount = static_cast<UINT>(box.Indices32.size());
     boxSubmesh.StartIndexLocation = boxIndexOffset;
-    boxSubmesh.BaseVertexLocation = boxVertexOffset;
+    boxSubmesh.BaseVertexLocation = static_cast<INT>(boxVertexOffset);
 
     SubmeshGeometry gridSubmesh;
-    gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
+    gridSubmesh.IndexCount = static_cast<UINT>(grid.Indices32.size());
     gridSubmesh.StartIndexLocation = gridIndexOffset;
-    gridSubmesh.BaseVertexLocation = gridVertexOffset;
+    gridSubmesh.BaseVertexLocation = static_cast<INT>(gridVertexOffset);
 
     SubmeshGeometry sphereSubmesh;
-    sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
+    sphereSubmesh.IndexCount = static_cast<UINT>(sphere.Indices32.size());
     sphereSubmesh.StartIndexLocation = sphereIndexOffset;
-    sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
+    sphereSubmesh.BaseVertexLocation = static_cast<INT>(sphereVertexOffset);
 
     SubmeshGeometry cylinderSubmesh;
-    cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
+    cylinderSubmesh.IndexCount = static_cast<UINT>(cylinder.Indices32.size());
     cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
-    cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
+    cylinderSubmesh.BaseVertexLocation = static_cast<INT>(cylinderVertexOffset);
 
     //
     // Extract the vertex elements we are interested in and pack the
@@ -590,43 +588,43 @@ void ShapesApp::BuildShapeGeometry()
     auto totalVertexCount
         = box.Vertices.size() + grid.Vertices.size() + sphere.Vertices.size() + cylinder.Vertices.size();
 
-    std::vector<Vertex> vertices(totalVertexCount);
+    std::vector<Vertex> vertices{totalVertexCount};
 
-    UINT k = 0;
-    for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
+    UINT k{0};
+    for (size_t i{0}; i < box.Vertices.size(); ++i, ++k)
     {
         vertices[k].Pos = box.Vertices[i].Position;
         vertices[k].Color = XMFLOAT4(DirectX::Colors::DarkGreen);
     }
 
-    for (size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
+    for (size_t i{0}; i < grid.Vertices.size(); ++i, ++k)
     {
         vertices[k].Pos = grid.Vertices[i].Position;
         vertices[k].Color = XMFLOAT4(DirectX::Colors::ForestGreen);
     }
 
-    for (size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
+    for (size_t i{0}; i < sphere.Vertices.size(); ++i, ++k)
     {
         vertices[k].Pos = sphere.Vertices[i].Position;
         vertices[k].Color = XMFLOAT4(DirectX::Colors::Crimson);
     }
 
-    for (size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
+    for (size_t i{0}; i < cylinder.Vertices.size(); ++i, ++k)
     {
         vertices[k].Pos = cylinder.Vertices[i].Position;
         vertices[k].Color = XMFLOAT4(DirectX::Colors::SteelBlue);
     }
 
-    std::vector<std::uint16_t> indices;
+    std::vector<std::uint16_t> indices{};
     indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
     indices.insert(indices.end(), std::begin(grid.GetIndices16()), std::end(grid.GetIndices16()));
     indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
     indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
 
-    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+    const UINT vbByteSize{static_cast<UINT>(vertices.size() * sizeof(Vertex))};
+    const UINT ibByteSize{static_cast<UINT>(indices.size() * sizeof(std::uint16_t))};
 
-    auto geo = std::make_unique<MeshGeometry>();
+    auto geo{std::make_unique<MeshGeometry>()};
     geo->Name = "shapeGeo";
 
     ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU[0]));
@@ -660,39 +658,55 @@ void ShapesApp::BuildShapeGeometry()
     mGeometries[geo->Name] = std::move(geo);
 }
 
-void ShapesApp::BuildPSO()
+void ShapesApp::BuildPSOs()
 {
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-    psoDesc.InputLayout = {mInputLayout.data(), (UINT)mInputLayout.size()};
-    psoDesc.pRootSignature = mRootSignature.Get();
-    psoDesc.VS = {reinterpret_cast<BYTE*>(mvsByteCode->GetBufferPointer()), mvsByteCode->GetBufferSize()};
-    psoDesc.PS = {reinterpret_cast<BYTE*>(mpsByteCode->GetBufferPointer()), mpsByteCode->GetBufferSize()};
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    psoDesc.SampleMask = UINT_MAX;
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = mBackBufferFormat;
-    psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-    psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
-    psoDesc.DSVFormat = mDepthStencilFormat;
-    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc{};
+
+    //
+    // PSO for opaque objects.
+    //
+    ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+    opaquePsoDesc.InputLayout = {mInputLayout.data(), (UINT)mInputLayout.size()};
+    opaquePsoDesc.pRootSignature = mRootSignature.Get();
+    opaquePsoDesc.VS = {reinterpret_cast<BYTE*>(mShaders["standardVS"]->GetBufferPointer()),
+                        mShaders["standardVS"]->GetBufferSize()};
+    opaquePsoDesc.PS = {reinterpret_cast<BYTE*>(mShaders["opaquePS"]->GetBufferPointer()),
+                        mShaders["opaquePS"]->GetBufferSize()};
+    opaquePsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    opaquePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    opaquePsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    opaquePsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    opaquePsoDesc.SampleMask = UINT_MAX;
+    opaquePsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    opaquePsoDesc.NumRenderTargets = 1;
+    opaquePsoDesc.RTVFormats[0] = mBackBufferFormat;
+    opaquePsoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
+    opaquePsoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+    opaquePsoDesc.DSVFormat = mDepthStencilFormat;
+    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
+
+    //
+    // PSO for opaque wireframe objects.
+    //
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
+    opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc,
+                                                          IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
 }
 
 void ShapesApp::BuildFrameResources()
 {
-    for (size_t i = 0; i < gNumFrameResources; ++i)
+    for (size_t i{0}; i < gNumFrameResources; ++i)
     {
-        mFrameResources.push_back(
-            std::make_unique<FrameResource>(md3dDevice.Get(), 1, (UINT)mAllRitems.size()));
+        mFrameResources.emplace_back(
+            std::make_unique<FrameResource>(md3dDevice.Get(), 1, static_cast<UINT>(mAllRitems.size())));
     }
 }
 
 void ShapesApp::BuildRenderItems()
 {
-    auto boxRitem = std::make_unique<RenderItem>();
+    auto boxRitem{std::make_unique<RenderItem>()};
     XMStoreFloat4x4(&boxRitem->World,
                     XMMatrixScaling(2.0F, 2.0F, 2.0F) * XMMatrixTranslation(0.0F, 0.5F, 0.0F));
     boxRitem->ObjCBIndex = 0;
@@ -701,9 +715,9 @@ void ShapesApp::BuildRenderItems()
     boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
     boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
     boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
-    mAllRitems.push_back(std::move(boxRitem));
+    mAllRitems.emplace_back(std::move(boxRitem));
 
-    auto gridRitem = std::make_unique<RenderItem>();
+    auto gridRitem{std::make_unique<RenderItem>()};
     gridRitem->World = Matrix::Identity;
     gridRitem->ObjCBIndex = 1;
     gridRitem->Geo = mGeometries["shapeGeo"].get();
@@ -711,21 +725,21 @@ void ShapesApp::BuildRenderItems()
     gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
     gridRitem->StartIndexLocation = gridRitem->Geo->DrawArgs["grid"].StartIndexLocation;
     gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
-    mAllRitems.push_back(std::move(gridRitem));
+    mAllRitems.emplace_back(std::move(gridRitem));
 
-    UINT objCBIndex = 2;
-    for (int i = 0; i < 5; ++i)
+    UINT objCBIndex{2};
+    for (int i{0}; i < 5; ++i)
     {
-        auto leftCylRitem = std::make_unique<RenderItem>();
-        auto rightCylRitem = std::make_unique<RenderItem>();
-        auto leftSphereRitem = std::make_unique<RenderItem>();
-        auto rightSphereRitem = std::make_unique<RenderItem>();
+        std::unique_ptr<RenderItem> leftCylRitem{std::make_unique<RenderItem>()};
+        std::unique_ptr<RenderItem> rightCylRitem{std::make_unique<RenderItem>()};
+        std::unique_ptr<RenderItem> leftSphereRitem{std::make_unique<RenderItem>()};
+        std::unique_ptr<RenderItem> rightSphereRitem{std::make_unique<RenderItem>()};
 
-        XMMATRIX leftCylWorld = XMMatrixTranslation(-5.0F, 1.5F, -10.0F + i * 5.0F);
-        XMMATRIX rightCylWorld = XMMatrixTranslation(+5.0F, 1.5F, -10.0F + i * 5.0F);
+        XMMATRIX leftCylWorld{XMMatrixTranslation(-5.0F, 1.5F, -10.0F + static_cast<float>(i) * 5.0F)};
+        XMMATRIX rightCylWorld{XMMatrixTranslation(+5.0F, 1.5F, -10.0F + static_cast<float>(i) * 5.0F)};
 
-        XMMATRIX leftSphereWorld = XMMatrixTranslation(-5.0F, 3.5F, -10.0F + i * 5.0F);
-        XMMATRIX rightSphereWorld = XMMatrixTranslation(+5.0F, 3.5F, -10.0F + i * 5.0F);
+        XMMATRIX leftSphereWorld{XMMatrixTranslation(-5.0F, 3.5F, -10.0F + static_cast<float>(i) * 5.0F)};
+        XMMATRIX rightSphereWorld{XMMatrixTranslation(+5.0F, 3.5F, -10.0F + static_cast<float>(i) * 5.0F)};
 
         XMStoreFloat4x4(&leftCylRitem->World, rightCylWorld);
         leftCylRitem->ObjCBIndex = objCBIndex++;
@@ -759,10 +773,10 @@ void ShapesApp::BuildRenderItems()
         rightSphereRitem->StartIndexLocation = rightSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
         rightSphereRitem->BaseVertexLocation = rightSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
 
-        mAllRitems.push_back(std::move(leftCylRitem));
-        mAllRitems.push_back(std::move(rightCylRitem));
-        mAllRitems.push_back(std::move(leftSphereRitem));
-        mAllRitems.push_back(std::move(rightSphereRitem));
+        mAllRitems.emplace_back(std::move(leftCylRitem));
+        mAllRitems.emplace_back(std::move(rightCylRitem));
+        mAllRitems.emplace_back(std::move(leftSphereRitem));
+        mAllRitems.emplace_back(std::move(rightSphereRitem));
     }
 
     // All the render items are opaque.
