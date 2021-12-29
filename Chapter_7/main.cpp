@@ -106,7 +106,7 @@ private:
 
     // Fields
     ComPtr<ID3D12RootSignature> mRootSignature{};
-    ComPtr<ID3D12DescriptorHeap> mCbvHeap{};
+    ComPtr<ID3D12DescriptorHeap> mCbvSrvUavHeap{};
 
     std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries{};
     std::unordered_map<std::string, ComPtr<ID3DBlob>> mShaders{};
@@ -236,69 +236,6 @@ void ShapesApp::Update(const Timer& gt)
     UpdateMainPassCB(gt);
 }
 
-void ShapesApp::Draw(const Timer& gt)
-{
-    auto& cmdListAlloc{mCurrFrameResource->CmdListAlloc};
-    ThrowIfFailed(cmdListAlloc->Reset());
-
-    if (mIsWireframe)
-    {
-        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque_wireframe"].Get()));
-    }
-    else
-    {
-        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
-    }
-
-    mCommandList->RSSetViewports(1, &mScreenViewport);
-    mCommandList->RSSetScissorRects(1, &mScissorRect);
-
-    auto barrier{CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-                                                      D3D12_RESOURCE_STATE_PRESENT,
-                                                      D3D12_RESOURCE_STATE_RENDER_TARGET)};
-    mCommandList->ResourceBarrier(1, &barrier);
-
-    mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-    mCommandList->ClearDepthStencilView(DepthStencilView(),
-                                        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-                                        1.0F,
-                                        0,
-                                        0,
-                                        nullptr);
-
-    auto backBufferView{CurrentBackBufferView()};
-    auto depthStencilView{DepthStencilView()};
-    mCommandList->OMSetRenderTargets(1, &backBufferView, TRUE, &depthStencilView);
-
-    const std::array<ID3D12DescriptorHeap*, 1> descriptorHeaps{mCbvHeap.Get()};
-    mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
-
-    mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-
-    auto passCbvIndex{mPassCbvOffset + mCurrFrameResourceIndex};
-    auto passCbvHandle{CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart())};
-    passCbvHandle.Offset(static_cast<INT>(passCbvIndex), mCbvSrvUavDescriptorSize);
-    mCommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
-
-    DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
-
-    barrier = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-                                                   D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                                   D3D12_RESOURCE_STATE_PRESENT);
-    mCommandList->ResourceBarrier(1, &barrier);
-
-    ThrowIfFailed(mCommandList->Close());
-
-    std::array<ID3D12CommandList*, 1> cmdLists{mCommandList.Get()};
-    mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdLists.size()), cmdLists.data());
-
-    ThrowIfFailed(mSwapChain->Present(0, 0));
-    mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
-
-    mCurrFrameResource->Fence = ++mCurrentFence;
-    mCommandQueue->Signal(mFence.Get(), mCurrentFence);
-}
-
 void ShapesApp::UpdateObjectCBs(const Timer& gt)
 {
     auto* currObjectCB{mCurrFrameResource->ObjectCB.get()};
@@ -348,6 +285,69 @@ void ShapesApp::UpdateMainPassCB(const Timer& gt)
     mMainPassCB.DeltaTime = static_cast<float>(gt.DeltaTime());
 }
 
+void ShapesApp::Draw(const Timer& gt)
+{
+    auto& cmdListAlloc{mCurrFrameResource->CmdListAlloc};
+    ThrowIfFailed(cmdListAlloc->Reset());
+
+    if (mIsWireframe)
+    {
+        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque_wireframe"].Get()));
+    }
+    else
+    {
+        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+    }
+
+    mCommandList->RSSetViewports(1, &mScreenViewport);
+    mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+    auto barrier{CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+                                                      D3D12_RESOURCE_STATE_PRESENT,
+                                                      D3D12_RESOURCE_STATE_RENDER_TARGET)};
+    mCommandList->ResourceBarrier(1, &barrier);
+
+    mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+    mCommandList->ClearDepthStencilView(DepthStencilView(),
+                                        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+                                        1.0F,
+                                        0,
+                                        0,
+                                        nullptr);
+
+    auto backBufferView{CurrentBackBufferView()};
+    auto depthStencilView{DepthStencilView()};
+    mCommandList->OMSetRenderTargets(1, &backBufferView, TRUE, &depthStencilView);
+
+    const std::array<ID3D12DescriptorHeap*, 1> descriptorHeaps{mCbvSrvUavHeap.Get()};
+    mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
+
+    mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+
+    auto passCbvIndex{mPassCbvOffset + mCurrFrameResourceIndex};
+    auto passCbvHandle{CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart())};
+    passCbvHandle.Offset(static_cast<INT>(passCbvIndex), mCbvSrvUavDescriptorSize);
+    mCommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
+
+    DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
+
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+                                                   D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                                   D3D12_RESOURCE_STATE_PRESENT);
+    mCommandList->ResourceBarrier(1, &barrier);
+
+    ThrowIfFailed(mCommandList->Close());
+
+    std::array<ID3D12CommandList*, 1> cmdLists{mCommandList.Get()};
+    mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdLists.size()), cmdLists.data());
+
+    ThrowIfFailed(mSwapChain->Present(0, 0));
+    mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+
+    mCurrFrameResource->Fence = ++mCurrentFence;
+    mCommandQueue->Signal(mFence.Get(), mCurrentFence);
+}
+
 void ShapesApp::OnKeyboardInput(const Timer& gt)
 {
     mIsWireframe = (GetAsyncKeyState('1') & 0x8000) != 0;
@@ -379,7 +379,7 @@ void ShapesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::v
         cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
         UINT cbvIndex{mCurrFrameResourceIndex * static_cast<UINT>(mAllRitems.size()) + ri->ObjCBIndex};
-        auto cbvHandle{CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart())};
+        auto cbvHandle{CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart())};
         cbvHandle.Offset(static_cast<int>(cbvIndex), mCbvSrvUavDescriptorSize);
 
         cmdList->SetGraphicsRootDescriptorTable(0, cbvHandle);
@@ -440,7 +440,7 @@ void ShapesApp::BuildConstantBufferViews()
             cbAddress += static_cast<unsigned long long>(i) * objCBByteSize;
 
             UINT heapIndex{frameIndex * objCount + i};
-            auto handle{CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart())};
+            auto handle{CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart())};
             handle.Offset(static_cast<int>(heapIndex), mCbvSrvUavDescriptorSize);
 
             D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
@@ -460,7 +460,7 @@ void ShapesApp::BuildConstantBufferViews()
         D3D12_GPU_VIRTUAL_ADDRESS cbAddress{passCB->GetGPUVirtualAddress()};
 
         auto heapIndex{mPassCbvOffset + frameIndex};
-        auto handle{CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart())};
+        auto handle{CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart())};
         handle.Offset(static_cast<INT>(heapIndex), mCbvSrvUavDescriptorSize);
 
         D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
@@ -483,7 +483,7 @@ void ShapesApp::CreateCbvDescriptorHeaps()
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     cbvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvSrvUavHeap)));
 }
 
 void ShapesApp::BuildRootSignature()

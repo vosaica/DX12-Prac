@@ -50,8 +50,8 @@ private:
     void OnMouseUp(WPARAM btnState, int x, int y) override;
     void OnMouseMove(WPARAM btnState, int x, int y) override;
 
-    void BuildCbvDescriptorHeap();
-    void BuildConstantBufferViews();
+    void BuildCbvSrvUavDescriptorHeap();
+    void BuildCbvSrvUavViews();
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
     void BuildBoxGeometry();
@@ -127,8 +127,8 @@ bool BoxApp::Initialize()
 
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-    BuildCbvDescriptorHeap();
-    BuildConstantBufferViews();
+    BuildCbvSrvUavDescriptorHeap();
+    BuildCbvSrvUavViews();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
@@ -265,7 +265,7 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
     mLastMousePos.y = y;
 }
 
-void BoxApp::BuildCbvDescriptorHeap()
+void BoxApp::BuildCbvSrvUavDescriptorHeap()
 {
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc{};
     cbvHeapDesc.NumDescriptors = 1;
@@ -275,7 +275,7 @@ void BoxApp::BuildCbvDescriptorHeap()
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
 }
 
-void BoxApp::BuildConstantBufferViews()
+void BoxApp::BuildCbvSrvUavViews()
 {
     mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
 

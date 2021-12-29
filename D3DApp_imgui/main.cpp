@@ -54,8 +54,8 @@ private:
     void OnMouseUp(WPARAM btnState, int x, int y) override;
     void OnMouseMove(WPARAM btnState, int x, int y) override;
 
-    void BuildCbvDescriptorHeap();
-    void BuildConstantBufferViews();
+    void BuildCbvSrvUavDescriptorHeap();
+    void BuildCbvSrvUavViews();
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
     void BuildBoxGeometry();
@@ -65,7 +65,6 @@ private:
 
     // Fields
     ComPtr<ID3D12RootSignature> mRootSignature{};
-    ComPtr<ID3D12DescriptorHeap> mCbvHeap{};
     ComPtr<ID3D12DescriptorHeap> mImguiSrvHeap{};
 
     std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB{};
@@ -104,17 +103,18 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
         BoxApp theAPP(hInstance);
         if (!theAPP.Initialize())
         {
-            return 0;
+            return 1;
         }
 
-        return theAPP.Run();
+        theAPP.Run();
+        return 0;
     }
     catch (com_exception& e)
     {
         auto message = cstring2wstring(e.what());
         MessageBox(nullptr, message.c_str(), L"HR Failed", MB_OK);
 
-        return 0;
+        return 1;
     }
 }
 
@@ -148,8 +148,8 @@ bool BoxApp::Initialize()
 
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-    BuildCbvDescriptorHeap();
-    BuildConstantBufferViews();
+    BuildCbvSrvUavDescriptorHeap();
+    BuildCbvSrvUavViews();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
@@ -220,7 +220,7 @@ void BoxApp::Draw(const Timer& gt)
     auto currDepthStencil = DepthStencilView();
     mCommandList->OMSetRenderTargets(1, &currBackBuffer, TRUE, &currDepthStencil);
 
-    const std::array<ID3D12DescriptorHeap*, 1> descriptorHeaps{mCbvHeap.Get()};
+    const std::array<ID3D12DescriptorHeap*, 1> descriptorHeaps{mCbvSrvUavHeap.Get()};
     mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
@@ -229,7 +229,7 @@ void BoxApp::Draw(const Timer& gt)
     mCommandList->IASetIndexBuffer(&ibv);
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    mCommandList->SetGraphicsRootDescriptorTable(0, mCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart());
     mCommandList->DrawIndexedInstanced(mBoxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -327,17 +327,17 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
     mLastMousePos.y = y;
 }
 
-void BoxApp::BuildCbvDescriptorHeap()
+void BoxApp::BuildCbvSrvUavDescriptorHeap()
 {
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc{};
     cbvHeapDesc.NumDescriptors = 1;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     cbvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvSrvUavHeap)));
 }
 
-void BoxApp::BuildConstantBufferViews()
+void BoxApp::BuildCbvSrvUavViews()
 {
     mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
 
@@ -351,7 +351,7 @@ void BoxApp::BuildConstantBufferViews()
     cbvDesc.BufferLocation = cbAddress;
     cbvDesc.SizeInBytes = CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-    md3dDevice->CreateConstantBufferView(&cbvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    md3dDevice->CreateConstantBufferView(&cbvDesc, mCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 void BoxApp::BuildRootSignature()
