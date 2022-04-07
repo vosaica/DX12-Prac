@@ -6,10 +6,11 @@ elseif is_mode("debug") then
     add_undefines("NDEBUG")
 end
 
-set_toolchains("msvc")
+set_toolchains("clang")
 set_languages("c++17", "c17")
 
-add_defines("WIN32", "UNICODE", "_UNICODE")
+add_defines("WIN32", "UNICODE", "_UNICODE", "_XM_NO_XMVECTOR_OVERLOADS_")
+add_cxxflags("-march=x86-64-v3")
 
 add_vectorexts("avx2")
 set_fpmodels("fast")
@@ -123,6 +124,22 @@ target("DXTK")
 
     add_includedirs("DXTK/")
     add_files("DXTK/*.cpp")
+
+
+target("Ch7_Test")
+    set_kind("binary")
+    add_deps("D3DApp")
+
+    add_packages("vcpkg::directxtk12",
+    "vcpkg::imgui",
+    "vcpkg::imgui[dx12-binding]",
+    "vcpkg::imgui[win32-binding]")
+
+    add_includedirs("Ch7_Test/")
+    add_files("Ch7_Test/*.cpp")
+
+    add_ldflags("/SUBSYSTEM:WINDOWS")
+    add_syslinks("User32", "Gdi32", "dxguid")
 
 
 task("CopyAssets_Chapter_6")

@@ -32,23 +32,25 @@ int main()
     std::cout.precision(8);
 
     XMFLOAT2 f2A{12.0F, 10.0F};
+    XMFLOAT2 f2B{10.0F, 1.0F};
     const XMVECTORF32 vA{{{10.0F, 1.0F}}}; // 常量类型用这个
     auto vB = XMLoadFloat2(&f2A);
-    auto vC = vA * vB;
+    auto vC = XMLoadFloat2(&f2B);
+    auto vD = vC * vB;
 
-    auto fX = XMVectorGetX(vC);
-    auto fY = XMVectorGetY(vC);
-    auto fZ = XMVectorGetZ(vC);
+    auto fX = XMVectorGetX(vD);
+    auto fY = XMVectorGetY(vD);
+    auto fZ = XMVectorGetZ(vD);
 
-    vC = XMVectorSetZ(vC, -2.0F);
+    vD = XMVectorSetZ(vD, -2.0F);
 
-    std::cout << fX << " " << fY << " " << fZ << " -> " << vC << std::endl;
-    std::cout << "vC's length: " << XMVector3LengthEst(vC) << std::endl;
+    std::cout << fX << " " << fY << " " << fZ << " -> " << vD << std::endl;
+    std::cout << "vD's length: " << XMVector3LengthEst(vD) << std::endl;
     std::cout << XMConvertToDegrees(XM_2PI) << std::endl;
 
-    std::cout << XMVector3Length(XMVector3Normalize(vC)) << " " << XMVector3Length(XMVector3Normalize(vB));
+    std::cout << XMVector3Length(XMVector3Normalize(vD)) << " " << XMVector3Length(XMVector3Normalize(vB));
     std::cout << " equal? : "
-              << XMVector3NearEqual(XMVector3Length(XMVector3Normalize(vC)),
+              << XMVector3NearEqual(XMVector3Length(XMVector3Normalize(vD)),
                                     XMVector3Length(XMVector3Normalize(vB)),
                                     XMVectorReplicate(0.0001))
               << std::endl;
