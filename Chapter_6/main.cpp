@@ -83,10 +83,7 @@ private:
     POINT mLastMousePos{};
 };
 
-int WINAPI WinMain(_In_ HINSTANCE hInstance,
-                   _In_opt_ HINSTANCE hPrevInstance,
-                   _In_ PSTR pCmdLine,
-                   _In_ int nShowCmd)
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR pCmdLine, _In_ int nShowCmd)
 {
 #ifndef NDEBUG
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -188,12 +185,8 @@ void BoxApp::Draw(const Timer& gt)
     mCommandList->ResourceBarrier(1, &barrier);
 
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-    mCommandList->ClearDepthStencilView(DepthStencilView(),
-                                        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-                                        1.0F,
-                                        0,
-                                        0,
-                                        nullptr);
+    mCommandList
+        ->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, nullptr);
 
     auto currBackBuffer{CurrentBackBufferView()};
     auto currDepthStencil{DepthStencilView()};
@@ -404,11 +397,8 @@ void BoxApp::BuildBoxGeometry()
     ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
     CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-    mBoxGeo->IndexBufferGPU = CreateDefaultBuffer(md3dDevice.Get(),
-                                                  mCommandList.Get(),
-                                                  indices.data(),
-                                                  ibByteSize,
-                                                  mBoxGeo->IndexBufferUploader);
+    mBoxGeo->IndexBufferGPU
+        = CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
 
     mBoxGeo->VertexByteStride[0] = sizeof(VPosData);
     mBoxGeo->VertexBufferByteSize[0] = vpbByteSize;

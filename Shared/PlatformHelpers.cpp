@@ -34,9 +34,8 @@ ComPtr<ID3D12Resource> D3DUtils::CreateDefaultBuffer(ID3D12Device* device,
     subResourceData.RowPitch = static_cast<LONG_PTR>(byteSize);
     subResourceData.SlicePitch = subResourceData.RowPitch;
 
-    auto barrier{CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),
-                                                      D3D12_RESOURCE_STATE_COMMON,
-                                                      D3D12_RESOURCE_STATE_COPY_DEST)};
+    auto barrier{
+        CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST)};
     cmdList->ResourceBarrier(1, &barrier);
     UpdateSubresources<1>(cmdList, defaultBuffer.Get(), uploadBuffer.Get(), 0, 0, 1, &subResourceData);
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),

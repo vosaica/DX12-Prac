@@ -45,22 +45,7 @@ int main()
     XMFLOAT4X4
     f4x4A{1.0F, 3.0F, 15.0F, 0.0F, 2.0F, 12.0F, 3.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
     XMMATRIX mA = XMLoadFloat4x4(&f4x4A);
-    XMMATRIX mB = XMMatrixSet(3.0F,
-                              1.0F,
-                              0.0F,
-                              0.0F,
-                              0.0F,
-                              1.0F,
-                              0.0F,
-                              0.0F,
-                              0.0F,
-                              0.0F,
-                              1.0F,
-                              0.0F,
-                              0.0F,
-                              0.0F,
-                              0.0F,
-                              1.0F);
+    XMMATRIX mB = XMMatrixSet(3.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F);
     XMVECTOR fDetB = XMMatrixDeterminant(mB);
 
     std::cout << "mA:\n" << mA << std::endl;

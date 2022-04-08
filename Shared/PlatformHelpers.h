@@ -29,9 +29,9 @@
 #include <wrl.h>
 
 #ifndef MAKEFOURCC
-#define MAKEFOURCC(ch0, ch1, ch2, ch3)                                                                          \
-    (static_cast<uint32_t>(static_cast<uint8_t>(ch0)) | (static_cast<uint32_t>(static_cast<uint8_t>(ch1)) << 8) \
-     | (static_cast<uint32_t>(static_cast<uint8_t>(ch2)) << 16) | (static_cast<uint32_t>(static_cast<uint8_t>(ch3)) << 24))
+#define MAKEFOURCC(ch0, ch1, ch2, ch3)                                                                        \
+  (static_cast<uint32_t>(static_cast<uint8_t>(ch0)) | (static_cast<uint32_t>(static_cast<uint8_t>(ch1)) << 8) \
+   | (static_cast<uint32_t>(static_cast<uint8_t>(ch2)) << 16) | (static_cast<uint32_t>(static_cast<uint8_t>(ch3)) << 24))
 #endif /* defined(MAKEFOURCC) */
 
 template <typename T, std::size_t N>
@@ -225,8 +225,8 @@ class UploadBuffer
 {
 public:
     UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) :
-        mIsConstantBuffer{isConstantBuffer}, mElementByteSize{isConstantBuffer ? CalcConstantBufferByteSize(sizeof(T)) :
-                                                                                 sizeof(T)}
+        mIsConstantBuffer{isConstantBuffer},
+        mElementByteSize{isConstantBuffer ? CalcConstantBufferByteSize(sizeof(T)) : sizeof(T)}
     {
         // Constant buffer elements need to be multiples of 256 bytes.
         // This is because the hardware can only view constant data
@@ -253,6 +253,7 @@ public:
 
     UploadBuffer(const UploadBuffer& rhs) = delete;
     UploadBuffer& operator=(const UploadBuffer& rhs) = delete;
+
     ~UploadBuffer()
     {
         if (mUploadBuffer != nullptr)
@@ -291,6 +292,7 @@ public:
     {
         DirectX::ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&CmdListAlloc)));
     }
+
     FrameResource(const FrameResource& rhs) = delete;
     FrameResource& operator=(const FrameResource& rhs) = delete;
     ~FrameResource() = default;

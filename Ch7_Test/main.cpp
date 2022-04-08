@@ -362,7 +362,7 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void BoxApp::BuildCbvSrvUavDescriptorHeap()
 {
-    auto const objCount{1};
+    const auto objCount{1};
 
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc{};
     cbvHeapDesc.NumDescriptors = objCount * gNumFrameResources;
@@ -375,7 +375,7 @@ void BoxApp::BuildCbvSrvUavDescriptorHeap()
 void BoxApp::BuildCbvSrvUavViews()
 {
     UINT objCBByteSize{CalcConstantBufferByteSize(sizeof(ObjectConstants))};
-    auto const objCount{1};
+    const auto objCount{1};
 
     for (UINT frameIndex{0}; frameIndex < gNumFrameResources; ++frameIndex)
     {

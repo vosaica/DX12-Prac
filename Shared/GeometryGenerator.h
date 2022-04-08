@@ -27,27 +27,23 @@ public:
     struct Vertex
     {
         Vertex() = default;
+
         Vertex(const DirectX::XMFLOAT3& p,
                const DirectX::XMFLOAT3& n,
                const DirectX::XMFLOAT3& t,
                const DirectX::XMFLOAT2& uv) :
             Position(p),
-            Normal(n), TangentU(t), TexC(uv)
+            Normal(n),
+            TangentU(t),
+            TexC(uv)
         {
         }
-        Vertex(float px,
-               float py,
-               float pz,
-               float nx,
-               float ny,
-               float nz,
-               float tx,
-               float ty,
-               float tz,
-               float u,
-               float v) :
+
+        Vertex(float px, float py, float pz, float nx, float ny, float nz, float tx, float ty, float tz, float u, float v) :
             Position(px, py, pz),
-            Normal(nx, ny, nz), TangentU(tx, ty, tz), TexC(u, v)
+            Normal(nx, ny, nz),
+            TangentU(tx, ty, tz),
+            TexC(u, v)
         {
         }
 
@@ -103,11 +99,7 @@ public:
     /// The bottom and top radius can vary to form various cone shapes rather than true
     // cylinders.  The slices and stacks parameters control the degree of tessellation.
     ///</summary>
-    static MeshData CreateCylinder(float bottomRadius,
-                            float topRadius,
-                            float height,
-                            uint32 sliceCount,
-                            uint32 stackCount);
+    static MeshData CreateCylinder(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount);
 
     ///< summary>
     /// Creates an mxn grid in the xz-plane with m rows and n columns, centered
@@ -124,15 +116,15 @@ private:
     static void Subdivide(MeshData& meshData);
     static Vertex MidPoint(const Vertex& v0, const Vertex& v1);
     static void BuildCylinderTopCap(float bottomRadius,
-                             float topRadius,
-                             float height,
-                             uint32 sliceCount,
-                             uint32 stackCount,
-                             MeshData& meshData);
+                                    float topRadius,
+                                    float height,
+                                    uint32 sliceCount,
+                                    uint32 stackCount,
+                                    MeshData& meshData);
     static void BuildCylinderBottomCap(float bottomRadius,
-                                float topRadius,
-                                float height,
-                                uint32 sliceCount,
-                                uint32 stackCount,
-                                MeshData& meshData);
+                                       float topRadius,
+                                       float height,
+                                       uint32 sliceCount,
+                                       uint32 stackCount,
+                                       MeshData& meshData);
 };

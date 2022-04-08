@@ -141,10 +141,7 @@ private:
     POINT mLastMousePos{};
 };
 
-int WINAPI WinMain(_In_ HINSTANCE hInstance,
-                   _In_opt_ HINSTANCE hPrevInstance,
-                   _In_ PSTR pCmdLine,
-                   _In_ int nShowCmd)
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR pCmdLine, _In_ int nShowCmd)
 {
 #ifndef NDEBUG
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -275,8 +272,7 @@ void ShapesApp::UpdateMainPassCB(const Timer& gt)
     XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
     XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
     mMainPassCB.EyePosW = mEyePos;
-    mMainPassCB.RenderTargetSize
-        = XMFLOAT2(static_cast<float>(mClientWidth), static_cast<float>(mClientHeight));
+    mMainPassCB.RenderTargetSize = XMFLOAT2(static_cast<float>(mClientWidth), static_cast<float>(mClientHeight));
     mMainPassCB.InvRenderTargetSize
         = XMFLOAT2(1.0F / static_cast<float>(mClientWidth), 1.0F / static_cast<float>(mClientHeight));
     mMainPassCB.NearZ = 1.0F;
@@ -308,12 +304,8 @@ void ShapesApp::Draw(const Timer& gt)
     mCommandList->ResourceBarrier(1, &barrier);
 
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-    mCommandList->ClearDepthStencilView(DepthStencilView(),
-                                        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-                                        1.0F,
-                                        0,
-                                        0,
-                                        nullptr);
+    mCommandList
+        ->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, nullptr);
 
     auto backBufferView{CurrentBackBufferView()};
     auto depthStencilView{DepthStencilView()};
@@ -585,8 +577,7 @@ void ShapesApp::BuildShapeGeometry()
     // vertices of all the meshes into one vertex buffer.
     //
 
-    auto totalVertexCount{box.Vertices.size() + grid.Vertices.size() + sphere.Vertices.size()
-                          + cylinder.Vertices.size()};
+    auto totalVertexCount{box.Vertices.size() + grid.Vertices.size() + sphere.Vertices.size() + cylinder.Vertices.size()};
 
     std::vector<Vertex> vertices{totalVertexCount};
 
@@ -633,17 +624,11 @@ void ShapesApp::BuildShapeGeometry()
     ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
     CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-    geo->VertexBufferGPU[0] = CreateDefaultBuffer(md3dDevice.Get(),
-                                                  mCommandList.Get(),
-                                                  vertices.data(),
-                                                  vbByteSize,
-                                                  geo->VertexBufferUploader[0]);
+    geo->VertexBufferGPU[0]
+        = CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader[0]);
 
-    geo->IndexBufferGPU = CreateDefaultBuffer(md3dDevice.Get(),
-                                              mCommandList.Get(),
-                                              indices.data(),
-                                              ibByteSize,
-                                              geo->IndexBufferUploader);
+    geo->IndexBufferGPU
+        = CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
 
     geo->VertexByteStride[0] = sizeof(Vertex);
     geo->VertexBufferByteSize[0] = vbByteSize;
@@ -668,10 +653,10 @@ void ShapesApp::BuildPSOs()
     ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
     opaquePsoDesc.InputLayout = {mInputLayout.data(), (UINT)mInputLayout.size()};
     opaquePsoDesc.pRootSignature = mRootSignature.Get();
-    opaquePsoDesc.VS = {reinterpret_cast<BYTE*>(mShaders["standardVS"]->GetBufferPointer()),
-                        mShaders["standardVS"]->GetBufferSize()};
-    opaquePsoDesc.PS = {reinterpret_cast<BYTE*>(mShaders["opaquePS"]->GetBufferPointer()),
-                        mShaders["opaquePS"]->GetBufferSize()};
+    opaquePsoDesc.VS
+        = {reinterpret_cast<BYTE*>(mShaders["standardVS"]->GetBufferPointer()), mShaders["standardVS"]->GetBufferSize()};
+    opaquePsoDesc.PS
+        = {reinterpret_cast<BYTE*>(mShaders["opaquePS"]->GetBufferPointer()), mShaders["opaquePS"]->GetBufferSize()};
     opaquePsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     opaquePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
     opaquePsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -691,8 +676,7 @@ void ShapesApp::BuildPSOs()
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
     opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc,
-                                                          IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
+    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
 }
 
 void ShapesApp::BuildFrameResources()
@@ -707,8 +691,7 @@ void ShapesApp::BuildFrameResources()
 void ShapesApp::BuildRenderItems()
 {
     auto boxRitem{std::make_unique<RenderItem>()};
-    XMStoreFloat4x4(&boxRitem->World,
-                    XMMatrixScaling(2.0F, 2.0F, 2.0F) * XMMatrixTranslation(0.0F, 0.5F, 0.0F));
+    XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0F, 2.0F, 2.0F) * XMMatrixTranslation(0.0F, 0.5F, 0.0F));
     boxRitem->ObjCBIndex = 0;
     boxRitem->Geo = mGeometries["shapeGeo"].get();
     boxRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
