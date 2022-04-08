@@ -1,1 +1,13 @@
-Checks: 'bugprone*, modernize*, performance*, portability*, readability*, -modernize-use-trailing-return-type, -readability-magic-numbers, -bugprone-easily-swappable-parameters'
+Checks: "
+  bugprone*,
+  cppcoreguidelines*,
+  modernize*,
+  performance*,
+  portability*,
+  readability*,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  "
