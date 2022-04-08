@@ -1,5 +1,6 @@
 #include "D3DApp.h"
 
+#include "../Shared/PlatformHelpers.h"
 #include "directx/d3dx12.h"
 
 #include <cassert>
@@ -226,10 +227,9 @@ void D3DApp::OnResize()
     dsvDesc.Texture2D.MipSlice = 0;
     md3dDevice->CreateDepthStencilView(mDepthStencilBuffer.Get(), &dsvDesc, DepthStencilView());
 
-    CD3DX12_RESOURCE_BARRIER barrierPreRtv{
-        CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilBuffer.Get(),
-                                             D3D12_RESOURCE_STATE_COMMON,
-                                             D3D12_RESOURCE_STATE_DEPTH_WRITE)};
+    CD3DX12_RESOURCE_BARRIER barrierPreRtv{CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilBuffer.Get(),
+                                                                                D3D12_RESOURCE_STATE_COMMON,
+                                                                                D3D12_RESOURCE_STATE_DEPTH_WRITE)};
     // Transition the resource from its initial state to be used as a depth buffer.
     mCommandList->ResourceBarrier(1, &barrierPreRtv);
 
@@ -469,8 +469,7 @@ bool D3DApp::InitDirect3D()
 
     mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     mDsvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    mCbvSrvUavDescriptorSize
-        = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    mCbvSrvUavDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     // Check 4X MSAA quality support for our back buffer format.
     // All Direct3D 11 capable devices support 4X MSAA for all render
@@ -481,9 +480,8 @@ bool D3DApp::InitDirect3D()
     msQualityLevels.SampleCount = 4;
     msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
     msQualityLevels.NumQualityLevels = 0;
-    ThrowIfFailed(md3dDevice->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
-                                                  &msQualityLevels,
-                                                  sizeof(msQualityLevels)));
+    ThrowIfFailed(
+        md3dDevice->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &msQualityLevels, sizeof(msQualityLevels)));
 
     m4xMsaaQuality = msQualityLevels.NumQualityLevels;
     assert(m4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
@@ -506,8 +504,8 @@ void D3DApp::CreateCommandObjects()
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     ThrowIfFailed(md3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCommandQueue)));
 
-    ThrowIfFailed(md3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                                     IID_PPV_ARGS(mDirectCmdListAlloc.GetAddressOf())));
+    ThrowIfFailed(
+        md3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(mDirectCmdListAlloc.GetAddressOf())));
 
     ThrowIfFailed(md3dDevice->CreateCommandList(0,
                                                 D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -583,9 +581,7 @@ ID3D12Resource* D3DApp::CurrentBackBuffer() const
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::CurrentBackBufferView() const
 {
-    return CD3DX12_CPU_DESCRIPTOR_HANDLE{mRtvHeap->GetCPUDescriptorHandleForHeapStart(),
-                                         mCurrBackBuffer,
-                                         mRtvDescriptorSize};
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE{mRtvHeap->GetCPUDescriptorHandleForHeapStart(), mCurrBackBuffer, mRtvDescriptorSize};
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::DepthStencilView() const
@@ -685,9 +681,8 @@ void D3DApp::LogOutputDisplayModes(const ComPtr<IDXGIOutput>& output, DXGI_FORMA
     {
         UINT n{x.RefreshRate.Numerator};
         UINT d = {x.RefreshRate.Denominator};
-        std::wstring text{L"Width = " + std::to_wstring(x.Width) + L" " + L"Height = "
-                          + std::to_wstring(x.Height) + L" " + L"Refresh = " + std::to_wstring(n) + L"/"
-                          + std::to_wstring(d) + L"\n"};
+        std::wstring text{L"Width = " + std::to_wstring(x.Width) + L" " + L"Height = " + std::to_wstring(x.Height) + L" "
+                          + L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d) + L"\n"};
 
         OutputDebugString(text.c_str());
     }

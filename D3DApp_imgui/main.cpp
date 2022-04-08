@@ -1,7 +1,4 @@
-#ifndef WIN32
-#define WIN32
-#endif // !WIN32
-
+#include "../Shared/PlatformHelpers.h"
 #include "D3DApp.h"
 #include "DirectXTK12/SimpleMath.h"
 #include "imgui.h"
@@ -89,10 +86,7 @@ private:
     POINT mLastMousePos{};
 };
 
-int WINAPI WinMain(_In_ HINSTANCE hInstance,
-                   _In_opt_ HINSTANCE hPrevInstance,
-                   _In_ PSTR pCmdLine,
-                   _In_ int nShowCmd)
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR pCmdLine, _In_ int nShowCmd)
 {
 #ifndef NDEBUG
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -209,12 +203,8 @@ void BoxApp::Draw(const Timer& gt)
     mCommandList->ResourceBarrier(1, &barrier);
 
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-    mCommandList->ClearDepthStencilView(DepthStencilView(),
-                                        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-                                        1.0F,
-                                        0,
-                                        0,
-                                        nullptr);
+    mCommandList
+        ->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, nullptr);
 
     auto currBackBuffer = CurrentBackBufferView();
     auto currDepthStencil = DepthStencilView();
@@ -242,22 +232,25 @@ void BoxApp::Draw(const Timer& gt)
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its
-    // code to learn more about Dear ImGui!).
+    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You
+    // can browse its code to learn more about Dear ImGui!).
     static bool show_demo_window = false;
     if (show_demo_window)
     {
         ImGui::ShowDemoWindow(&show_demo_window);
     }
 
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a
+    // named window.
     {
         static int counter = 0;
 
         ImGui::Begin("Box!"); // Create a window called "Hello, world!" and append into it.
 
-        ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-        ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
+        ImGui::Text("This is some useful text."); // Display some text (you can use a format
+                                                  // strings too)
+        ImGui::Checkbox("Demo Window",
+                        &show_demo_window); // Edit bools storing our window open/close state
 
         ImGui::SliderFloat("Phi", &mPhi, 0.001F, XM_PI - 0.001F);
         ImGui::SliderFloat("Theta", &mTheta, -XM_2PI, XM_2PI);
@@ -408,8 +401,8 @@ void BoxApp::BuildBoxGeometry()
                                       Vertex({XMFLOAT3(+1.0F, +1.0F, +1.0F), XMFLOAT4(Colors::Cyan)}),
                                       Vertex({XMFLOAT3(+1.0F, -1.0F, +1.0F), XMFLOAT4(Colors::Magenta)})};
 
-    std::array<std::uint16_t, 36> indices = {0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 4, 5, 1, 4, 1, 0,
-                                             3, 2, 6, 3, 6, 7, 1, 5, 6, 1, 6, 2, 4, 0, 3, 4, 3, 7};
+    std::array<std::uint16_t, 36> indices
+        = {0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 4, 5, 1, 4, 1, 0, 3, 2, 6, 3, 6, 7, 1, 5, 6, 1, 6, 2, 4, 0, 3, 4, 3, 7};
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
     const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
@@ -428,11 +421,8 @@ void BoxApp::BuildBoxGeometry()
                                                       vertices.data(),
                                                       vbByteSize,
                                                       mBoxGeo->VertexBufferUploader[0]);
-    mBoxGeo->IndexBufferGPU = CreateDefaultBuffer(md3dDevice.Get(),
-                                                  mCommandList.Get(),
-                                                  indices.data(),
-                                                  ibByteSize,
-                                                  mBoxGeo->IndexBufferUploader);
+    mBoxGeo->IndexBufferGPU
+        = CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
 
     mBoxGeo->VertexByteStride[0] = sizeof(Vertex);
     mBoxGeo->VertexBufferByteSize[0] = vbByteSize;
@@ -475,8 +465,7 @@ void BoxApp::CreateImguiDescriptorHeaps()
     ImguiSrvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     ImguiSrvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     ImguiSrvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(
-        md3dDevice->CreateDescriptorHeap(&ImguiSrvHeapDesc, IID_PPV_ARGS(mImguiSrvHeap.GetAddressOf())));
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&ImguiSrvHeapDesc, IID_PPV_ARGS(mImguiSrvHeap.GetAddressOf())));
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
