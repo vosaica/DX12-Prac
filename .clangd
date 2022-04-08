@@ -1,0 +1,11 @@
+CompileFlags:
+  Add: [-pedantic]
+
+Completion:
+  AllScopes: Yes
+
+Diagnostics:
+  UnusedIncludes: Strict
+
+Hover:
+  ShowAKA: Yes

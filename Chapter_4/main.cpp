@@ -1,3 +1,4 @@
+#include "../Shared/PlatformHelpers.h"
 #include "D3DApp.h"
 #include "directx/d3dx12.h"
 
@@ -20,10 +21,7 @@ private:
     void Draw(const Timer& t) override;
 };
 
-int WINAPI WinMain(_In_ HINSTANCE hInstance,
-                   _In_opt_ HINSTANCE hPrevInstance,
-                   _In_ PSTR pCmdLine,
-                   _In_ int nShowCmd)
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR pCmdLine, _In_ int nShowCmd)
 {
 #ifndef NDEBUG
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -83,12 +81,8 @@ void InitDirect3DApp::Draw(const Timer& t)
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-    mCommandList->ClearDepthStencilView(DepthStencilView(),
-                                        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-                                        1.0F,
-                                        0,
-                                        0,
-                                        nullptr);
+    mCommandList
+        ->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, nullptr);
 
     auto currentBackBufferView{CurrentBackBufferView()};
     auto depthStencilView{DepthStencilView()};

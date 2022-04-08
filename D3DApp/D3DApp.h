@@ -6,7 +6,6 @@
 #include <crtdbg.h>
 #endif
 
-#include "../Shared/PlatformHelpers.h"
 #include "../Shared/Timer.h"
 
 #include <array>

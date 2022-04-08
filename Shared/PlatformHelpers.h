@@ -29,12 +29,16 @@
 #include <wrl.h>
 
 #ifndef MAKEFOURCC
-#define MAKEFOURCC(ch0, ch1, ch2, ch3)                          \
-    (static_cast<uint32_t>(static_cast<uint8_t>(ch0))           \
-     | (static_cast<uint32_t>(static_cast<uint8_t>(ch1)) << 8)  \
-     | (static_cast<uint32_t>(static_cast<uint8_t>(ch2)) << 16) \
-     | (static_cast<uint32_t>(static_cast<uint8_t>(ch3)) << 24))
+#define MAKEFOURCC(ch0, ch1, ch2, ch3)                                                                          \
+    (static_cast<uint32_t>(static_cast<uint8_t>(ch0)) | (static_cast<uint32_t>(static_cast<uint8_t>(ch1)) << 8) \
+     | (static_cast<uint32_t>(static_cast<uint8_t>(ch2)) << 16) | (static_cast<uint32_t>(static_cast<uint8_t>(ch3)) << 24))
 #endif /* defined(MAKEFOURCC) */
+
+template <typename T, std::size_t N>
+inline static decltype(auto) to_raw_array(std::array<T, N>& arr_v)
+{
+    return reinterpret_cast<T(&)[N]>(*arr_v.data());
+}
 
 namespace DirectX
 {
@@ -48,9 +52,9 @@ public:
 
     [[nodiscard]] const char* what() const noexcept override
     {
-        static char s_str[64] = {};
-        sprintf_s(s_str, "Failure with HRESULT of %08X", static_cast<unsigned int>(result));
-        return s_str;
+        static std::array<char, 64> s_str = {};
+        sprintf_s(to_raw_array(s_str), "Failure with HRESULT of %08X", static_cast<unsigned int>(result));
+        return s_str.data();
     }
 
     [[nodiscard]] HRESULT get_result() const noexcept
@@ -135,12 +139,11 @@ inline std::wstring cstring2wstring(const char* str)
 }
 
 // Below are added Helpers from the d3dUtils.h
-Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
-    ID3D12Device* device,
-    ID3D12GraphicsCommandList* cmdList,
-    const void* initData,
-    UINT64 byteSize,
-    Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
+Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(ID3D12Device* device,
+                                                           ID3D12GraphicsCommandList* cmdList,
+                                                           const void* initData,
+                                                           UINT64 byteSize,
+                                                           Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
 
 Microsoft::WRL::ComPtr<ID3DBlob> LoadShaderBinary(const std::wstring& filename);
 
@@ -222,7 +225,8 @@ class UploadBuffer
 {
 public:
     UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) :
-        mIsConstantBuffer{isConstantBuffer}, mElementByteSize{sizeof(T)}
+        mIsConstantBuffer{isConstantBuffer}, mElementByteSize{isConstantBuffer ? CalcConstantBufferByteSize(sizeof(T)) :
+                                                                                 sizeof(T)}
     {
         // Constant buffer elements need to be multiples of 256 bytes.
         // This is because the hardware can only view constant data
@@ -231,10 +235,6 @@ public:
         // UINT64 OffsetInBytes; // multiple of 256
         // UINT   SizeInBytes;   // multiple of 256
         // } D3D12_CONSTANT_BUFFER_VIEW_DESC;
-        if (isConstantBuffer)
-        {
-            mElementByteSize = CalcConstantBufferByteSize(sizeof(T));
-        }
 
         auto heapProperties{CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD)};
         auto resourceDesc{CD3DX12_RESOURCE_DESC::Buffer(static_cast<UINT64>(elementCount) * mElementByteSize)};
@@ -277,7 +277,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer{};
     BYTE* mMappedData{nullptr};
 
-    UINT mElementByteSize{0};
+    ULONGLONG mElementByteSize{0};
     bool mIsConstantBuffer{false};
 };
 
@@ -289,8 +289,7 @@ public:
         PassCB{std::make_unique<UploadBuffer<PassConstants>>(device, passCount, true)},
         ObjectCB{std::make_unique<UploadBuffer<ObjectConstants>>(device, objectCount, true)}
     {
-        DirectX::ThrowIfFailed(
-            device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&CmdListAlloc)));
+        DirectX::ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&CmdListAlloc)));
     }
     FrameResource(const FrameResource& rhs) = delete;
     FrameResource& operator=(const FrameResource& rhs) = delete;
