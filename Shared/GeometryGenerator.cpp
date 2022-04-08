@@ -246,16 +246,18 @@ void GeometryGenerator::Subdivide(MeshData& meshData)
     meshData.Vertices.resize(0);
     meshData.Indices32.resize(0);
 
-    // v1
-    // *
-    /         //     /   \
-	//  m0*-----*m1
-        / \ / //  /   \ /   \
-	// *-----*-----*
-        v0 m2 v2
-
-            uint32 numTris
-        = (uint32)inputCopy.Indices32.size() / 3;
+    /*
+               v1
+               *
+              / \
+             /   \
+          m0*-----*m1
+           / \   / \
+          /   \ /   \
+         *-----*-----*
+         v0    m2     v2
+    */
+    uint32 numTris = (uint32)inputCopy.Indices32.size() / 3;
     for (uint32 i = 0; i < numTris; ++i)
     {
         Vertex v0 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 0]];

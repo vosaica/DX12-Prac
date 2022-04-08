@@ -1,3 +1,4 @@
+#include "../Shared/PlatformHelpers.h"
 #include "D3DApp.h"
 #include "DirectXTK12/SimpleMath.h"
 
