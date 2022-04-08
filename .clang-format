@@ -58,6 +58,7 @@ Cpp11BracedListStyle: true
 DeriveLineEnding: true
 DerivePointerAlignment: false
 DisableFormat: false
+EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: Always
 FixNamespaceComments: true
 IncludeBlocks: Regroup
@@ -75,16 +76,16 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 LambdaBodyIndentation: Signature
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
-PenaltyBreakAssignment: 2
-PenaltyBreakBeforeFirstCallParameter: 19
-PenaltyBreakComment: 300
-PenaltyBreakFirstLessLess: 120
-PenaltyBreakString: 1000
-PenaltyBreakTemplateDeclaration: 10
-PenaltyExcessCharacter: 1000000
-PenaltyReturnTypeOnItsOwnLine: 1000
+PackConstructorInitializers: CurrentLine
 PointerAlignment: Left
+PPIndentWidth: 2
+QualifierAlignment: Custom
+QualifierOrder: ["inline", "static", "volatile", "const", "type"]
+ReferenceAlignment: Left
 ReflowComments: true
+RemoveBracesLLVM: false
+SeparateDefinitionBlocks: Always
+ShortNamespaceLines: 0
 SortIncludes: CaseSensitive
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
@@ -96,16 +97,27 @@ SpaceBeforeCaseColon: true
 SpaceBeforeCpp11BracedList: false
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
-SpaceBeforeParens: ControlStatements
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterForeachMacros: true
+  AfterFunctionDeclarationName: false
+  AfterFunctionDefinitionName: false
+  AfterIfMacros: true
+  AfterOverloadedOperator: false
+  BeforeNonEmptyParentheses: false
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
 SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 1
-SpacesInAngles: false
+SpacesInAngles: Never
 SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: 1
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 TabWidth: 4
